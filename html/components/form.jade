@@ -1,0 +1,26 @@
+form(data-formfor-c='component' data-event-submit='save | withArguments component')
+  .row
+    div.alert.alert-danger(data-showif='c.errors.length')
+      ul.list-unstyled
+        li(data-foreach-error='c.errors' data-bind='error.fullMessage')
+  .row
+    .well
+      .img-container(style="height:200px;width:100%")
+        p(data-showif='c.imageDataURI | not') Upload an image to see a preview!
+        img(style='max-height:100%; max-width:100%' data-bind-src='c.imageDataURI')
+  .row
+    .form-group
+      label Name
+      input.form-control(type='text' data-bind='c.name' placeholder='name')
+    .form-group
+      label File
+      input.form-control(type='file' data-bind='c.imageFile')
+    .form-group
+      label Description
+      textarea.form-control(data-bind='c.description' placeholder='description')
+    .form-group
+      .row
+        .col-xs-4
+          input.btn.btn-primary(type='submit' value='Save')
+        .col-xs-4
+          a.btn.btn-danger(data-event-click='destroy | withArguments component', data-showif='component.isNew | not') Delete

@@ -1,15 +1,17 @@
 var gulp = require('gulp');
-var PRELOAD_TEMPLATES = false
+var PRELOAD_TEMPLATES = true
 
-gulp.task('default', ['harp', 'spec'], function(){
+gulp.task('default', ['harp'], function(){
   var tasks = ["build"]
   gulp.watch('./**/*.coffee', tasks)
   gulp.watch('./**/*.html', tasks)
+  gulp.watch('./**/*.jade', tasks)
 });
 
 // BUILD BATMANJS APP
 var coffee = require('gulp-coffee');
 var concat = require('gulp-concat');
+var jade = require('gulp-jade');
 var batmanTemplates = require("gulp-batman-templates")
 
 // Files will be loaded and "compiled" in this order:
@@ -31,7 +33,8 @@ gulp.task("build_app", function(){
 })
 
 gulp.task("build_html", function(){
-  var stream = gulp.src(["./html/**/*.html"])
+  var stream = gulp.src(["./html/**/*.jade"])
+    .pipe(jade())
     .pipe(batmanTemplates())
     .pipe(concat('templates.js'))
     .pipe(gulp.dest("./build/"))

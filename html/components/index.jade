@@ -1,0 +1,16 @@
+.row
+  .col-sm-6
+    h1.page-header Components
+.row
+  .col-sm-3.col-sm-offset-9
+    a.btn.btn-primary(data-route='routes.components.new') New Component
+
+.row(data-foreach-group='componentGroups')
+  .col-sm-3(data-foreach-component='group')
+    .thumbnail
+      .img-container(style="height:200px;width:100%")
+        img(style='max-height:100%; max-width:100%' data-bind-src='component.imageDataURI')
+      .caption
+        p(data-bind='component.name')
+        a.btn.btn-primary(data-route='routes.components[component].edit') Edit
+        a.btn.btn-danger(data-event-click='destroy | withArguments component' ) Destroy

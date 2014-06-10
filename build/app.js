@@ -11,14 +11,18 @@
       return App.__super__.constructor.apply(this, arguments);
     }
 
-    App.root('greetings#index');
+    App.root('avatars#new');
 
-    App.resources('greetings');
+    App.resources('components');
 
-    App.syncsWithFirebase("batfire-example");
+    App.resources('avatars');
+
+    App.syncsWithFirebase("pcoavatars");
+
+    App.authorizesWithFirebase("github");
 
     App.on('run', function() {
-      return console.warn("Add your firebase key to ./app.coffee, then remove this warning!");
+      return paper.install(window);
     });
 
     return App;
@@ -29,24 +33,74 @@
     return App.run();
   });
 
-  App.Greeting = (function(_super) {
-    __extends(Greeting, _super);
+  App.Avatar = (function(_super) {
+    __extends(Avatar, _super);
 
-    function Greeting() {
-      return Greeting.__super__.constructor.apply(this, arguments);
+    function Avatar() {
+      return Avatar.__super__.constructor.apply(this, arguments);
     }
 
-    Greeting.resourceName = 'greeting';
+    Avatar.resourceName = 'avatar';
 
-    Greeting.persist(BatFire.Storage);
+    Avatar.persist(BatFire.Storage);
 
-    Greeting.encode('message', 'title', 'fullName');
+    Avatar.encode('imageDataURI', 'name');
 
-    Greeting.accessor('toString', function() {
-      return "" + (this.get('message')) + ", " + (this.get('title')) + " " + (this.get('fullName'));
+    Avatar.validate('name', {
+      presence: true
     });
 
-    return Greeting;
+    Avatar.validate('imageDataURI', {
+      presence: true
+    });
+
+    return Avatar;
+
+  })(Batman.Model);
+
+  App.Component = (function(_super) {
+    __extends(Component, _super);
+
+    Component.resourceName = 'component';
+
+    Component.persist(BatFire.Storage);
+
+    Component.encode('imageDataURI', 'name', 'description');
+
+    Component.validate('imageDataURI', {
+      presence: true
+    });
+
+    Component.validate('name', {
+      presence: true
+    });
+
+    function Component() {
+      Component.__super__.constructor.apply(this, arguments);
+      this.observe('imageFile', function(nV, oV) {
+        if (nV != null) {
+          return this._setImageDataURIFromFile();
+        } else {
+          return this.set('imageDataURI', "");
+        }
+      });
+    }
+
+    Component.prototype._setImageDataURIFromFile = function() {
+      var file, reader;
+      file = this.get('imageFile');
+      reader = new FileReader;
+      reader.onload = (function(_this) {
+        return function(e) {
+          var dataURI;
+          dataURI = e.target.result;
+          return _this.set('imageDataURI', dataURI);
+        };
+      })(this);
+      return reader.readAsDataURL(file);
+    };
+
+    return Component;
 
   })(Batman.Model);
 
@@ -57,49 +111,277 @@
       return ApplicationController.__super__.constructor.apply(this, arguments);
     }
 
+    ApplicationController.prototype.save = function(obj, callback) {
+      return obj.save((function(_this) {
+        return function(err, record) {
+          if (err != null) {
+            if (!(err instanceof Batman.ErrorsSet)) {
+              throw err;
+            }
+          } else {
+            return typeof callback === "function" ? callback(err, record) : void 0;
+          }
+        };
+      })(this));
+    };
+
+    ApplicationController.prototype.destroy = function(obj, callback) {
+      return obj.destroy((function(_this) {
+        return function(err, record) {
+          if (err != null) {
+            throw err;
+          } else {
+            return typeof callback === "function" ? callback(err, record) : void 0;
+          }
+        };
+      })(this));
+    };
+
     return ApplicationController;
 
   })(Batman.Controller);
 
-  App.GreetingsController = (function(_super) {
-    __extends(GreetingsController, _super);
+  App.AvatarsController = (function(_super) {
+    __extends(AvatarsController, _super);
 
-    function GreetingsController() {
-      return GreetingsController.__super__.constructor.apply(this, arguments);
+    function AvatarsController() {
+      return AvatarsController.__super__.constructor.apply(this, arguments);
     }
 
-    GreetingsController.prototype.routingKey = 'greetings';
+    AvatarsController.prototype.routingKey = "avatars";
 
-    GreetingsController.prototype.index = function(params) {
-      return this.set('exampleGreeting', new App.Greeting({
-        message: "Warmest welcome",
-        title: "Dr.",
-        fullName: "Lucius Fox"
-      }));
+    AvatarsController.prototype["new"] = function() {
+      return this.set('avatar', new App.Avatar);
     };
 
-    GreetingsController.prototype.show = function(params) {
-      return App.Greeting.find(params.id, (function(_this) {
+    AvatarsController.prototype.index = function() {
+      return this.set('avatars', App.Avatar.get('all'));
+    };
+
+    AvatarsController.prototype.save = function() {
+      return this.get('avatar').save((function(_this) {
         return function(err, record) {
-          return _this.set('greeting', record);
+          if (err != null) {
+            if (!(err instanceof Batman.ErrorsSet)) {
+              throw err;
+            }
+          } else {
+            return _this.redirect({
+              action: "index"
+            });
+          }
         };
       })(this));
     };
 
-    GreetingsController.prototype.edit = function(params) {
-      return App.Greeting.find(params.id, (function(_this) {
-        return function(err, record) {
-          return _this.set('greeting', record.transaction());
-        };
-      })(this));
-    };
-
-    GreetingsController.prototype["new"] = function(params) {
-      return this.set('greeting', new App.Greeting);
-    };
-
-    return GreetingsController;
+    return AvatarsController;
 
   })(App.ApplicationController);
+
+  App.ComponentsController = (function(_super) {
+    __extends(ComponentsController, _super);
+
+    function ComponentsController() {
+      return ComponentsController.__super__.constructor.apply(this, arguments);
+    }
+
+    ComponentsController.prototype.routingKey = "components";
+
+    ComponentsController.prototype.index = function() {};
+
+    ComponentsController.prototype["new"] = function() {
+      return this.set('component', new App.Component);
+    };
+
+    ComponentsController.prototype.edit = function(params) {
+      App.Component.find(params.id, (function(_this) {
+        return function(err, record) {
+          _this.set('component', record);
+          return _this.render();
+        };
+      })(this));
+      return this.render(false);
+    };
+
+    ComponentsController.prototype.save = function(component) {
+      return ComponentsController.__super__.save.call(this, component, (function(_this) {
+        return function(e, r) {
+          return _this.redirect({
+            action: "index"
+          });
+        };
+      })(this));
+    };
+
+    ComponentsController.accessor('componentGroups', function() {
+      return App.Component.get('all').inGroupsOf(4);
+    });
+
+    return ComponentsController;
+
+  })(App.ApplicationController);
+
+  App.AvatarsNewView = (function(_super) {
+    __extends(AvatarsNewView, _super);
+
+    function AvatarsNewView() {
+      AvatarsNewView.__super__.constructor.apply(this, arguments);
+      this.set('selectedComponentId', null);
+      this.observe('selectedComponent', (function(_this) {
+        return function(nv, ov) {
+          if (nv != null) {
+            return _this.addComponent();
+          }
+        };
+      })(this));
+    }
+
+    AvatarsNewView.accessor('selectedComponent', function() {
+      return App.Component.get('loaded.indexedByUnique.id').get(this.get('selectedComponentId'));
+    });
+
+    AvatarsNewView.prototype.on('viewDidAppear', function() {
+      var initialPoint, tool;
+      if (this.canvas != null) {
+        return;
+      }
+      this.scope = new paper.PaperScope;
+      this.canvas = $(this.node).find('canvas')[0];
+      this.scope.setup(this.canvas);
+      tool = new Tool;
+      initialPoint = null;
+      tool.onMouseDown = (function(_this) {
+        return function(e) {
+          var currentItem, item, _i, _len, _ref, _results;
+          if (e.item == null) {
+            return;
+          }
+          currentItem = _this.get('currentItem');
+          if (_this._testItem(e.item, e.point)) {
+            return _this.set('currentItem', e.item);
+          } else if ((currentItem != null) && _this._testItem(currentItem, e.point)) {
+
+          } else {
+            _ref = _this.scope.project.activeLayer.children;
+            _results = [];
+            for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+              item = _ref[_i];
+              if (_this._testItem(item, e.point)) {
+                _this.set('currentItem', item);
+                break;
+              } else {
+                _results.push(void 0);
+              }
+            }
+            return _results;
+          }
+        };
+      })(this);
+      return tool.onMouseDrag = (function(_this) {
+        return function(e) {
+          var lastPostion, newPosition, _ref, _ref1;
+          if (e.delta != null) {
+            lastPostion = (_ref = _this.get('currentItem')) != null ? _ref.position : void 0;
+            newPosition = [lastPostion.x + e.delta.x, lastPostion.y + e.delta.y];
+            if ((_ref1 = _this.get('currentItem')) != null) {
+              _ref1.position = newPosition;
+            }
+            return _this._updateAvatar();
+          }
+        };
+      })(this);
+    });
+
+    AvatarsNewView.prototype._testItem = function(item, point) {
+      var targetItemIsPresent, targetItemTest;
+      targetItemTest = item.hitTest(point, {
+        fill: true
+      });
+      return targetItemIsPresent = targetItemTest.color.alpha !== 0;
+    };
+
+    AvatarsNewView.prototype.zoomOut = function() {
+      var _ref;
+      if ((_ref = this.get('currentItem')) != null) {
+        _ref.scale(0.9);
+      }
+      return this._updateAvatar();
+    };
+
+    AvatarsNewView.prototype.zoomIn = function() {
+      var _ref;
+      if ((_ref = this.get('currentItem')) != null) {
+        _ref.scale(1.1);
+      }
+      return this._updateAvatar();
+    };
+
+    AvatarsNewView.prototype.remove = function() {
+      var _ref;
+      if ((_ref = this.get('currentItem')) != null) {
+        _ref.remove();
+      }
+      this.unset('currentItem');
+      return this._updateAvatar();
+    };
+
+    AvatarsNewView.prototype.rotateLeft = function() {
+      var _ref;
+      if ((_ref = this.get('currentItem')) != null) {
+        _ref.rotate(-5);
+      }
+      return this._updateAvatar();
+    };
+
+    AvatarsNewView.prototype.rotateRight = function() {
+      var _ref;
+      if ((_ref = this.get('currentItem')) != null) {
+        _ref.rotate(5);
+      }
+      return this._updateAvatar();
+    };
+
+    AvatarsNewView.prototype.sendToBack = function() {
+      var _ref;
+      if ((_ref = this.get('currentItem')) != null) {
+        _ref.sendToBack();
+      }
+      return this._updateAvatar();
+    };
+
+    AvatarsNewView.prototype.bringToFront = function() {
+      var _ref;
+      if ((_ref = this.get('currentItem')) != null) {
+        _ref.bringToFront();
+      }
+      return this._updateAvatar();
+    };
+
+    AvatarsNewView.prototype._updateAvatar = function() {
+      paper.view.draw();
+      return this.controller.get('avatar').set('imageDataURI', this.canvas.toDataURL());
+    };
+
+    AvatarsNewView.prototype.addComponent = function() {
+      var component, raster;
+      component = this.get('selectedComponent');
+      raster = new paper.Raster(component.get('imageDataURI'), paper.view.center);
+      raster.component = component;
+      this.unset('selectedComponentId');
+      return this._updateAvatar();
+    };
+
+    AvatarsNewView.prototype.downloadAvatar = function() {
+      var link, uri;
+      uri = this.controller.get('avatar.imageDataURI');
+      link = document.createElement("a");
+      link.download = "avatar.png";
+      link.href = uri;
+      return link.click();
+    };
+
+    return AvatarsNewView;
+
+  })(Batman.View);
 
 }).call(this);

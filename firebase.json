@@ -1,5 +1,5 @@
 {
-  "firebase": "batman-blog",
+  "firebase": "pcoavatars",
   "public": "./",
   "rules": "config/security_rules.json",
   "ignore": [
