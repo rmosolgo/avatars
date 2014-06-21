@@ -6,6 +6,7 @@ gulp.task('default', ['harp'], function(){
   gulp.watch('./**/*.coffee', tasks)
   gulp.watch('./**/*.html', tasks)
   gulp.watch('./**/*.jade', tasks)
+  gulp.watch('./**/*.scss', tasks)
 });
 
 // BUILD BATMANJS APP
@@ -41,7 +42,15 @@ gulp.task("build_html", function(){
   return stream
 })
 
-var appTasks = ["build_app", "build_html"]
+var sass = require("gulp-sass");
+
+gulp.task("build_styles", function(){
+  var stream = gulp.src(["./stylesheets/index.scss"])
+    .pipe(sass({errLogToConsole: true}))
+    .pipe(concat('styles.css'))
+    .pipe(gulp.dest("./build/"))
+})
+var appTasks = ["build_app", "build_html", "build_styles"]
 // Only include the templates in application.js if PRELOAD VIEWS
 var finalSources = PRELOAD_TEMPLATES ? ["./build/app.js", "./build/templates.js"] : ["./build/app.js"]
 
