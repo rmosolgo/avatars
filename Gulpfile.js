@@ -4,9 +4,9 @@ var PRELOAD_TEMPLATES = true
 gulp.task('default', ['harp'], function(){
   var tasks = ["build"]
   gulp.watch([
-    './**/*.coffee',
-    './**/*.html',
-    './**/*.jade',
+    './app/**/*.coffee',
+    './app/**/*.html',
+    './app/**/*.jade',
     './**/*.scss'
     ], tasks)
 });
@@ -19,11 +19,11 @@ var batmanTemplates = require("gulp-batman-templates")
 
 // Files will be loaded and "compiled" in this order:
 var appSources = [
-  "./app.coffee",
-  "./lib/*.coffee",
-  "./models/*.coffee",
-  "./controllers/*.coffee",
-  "./views/**/*.coffee",
+  "./app/app.coffee",
+  "./app/lib/*.coffee",
+  "./app/models/*.coffee",
+  "./app/controllers/*.coffee",
+  "./app/views/**/*.coffee",
 ]
 
 gulp.task("build_app", function(){
@@ -39,7 +39,7 @@ gulp.task("build_app", function(){
 })
 
 gulp.task("build_html", function(){
-  var stream = gulp.src(["./html/**/*.jade"])
+  var stream = gulp.src(["./app/html/**/*.jade"])
     .pipe(jade())
     .pipe(batmanTemplates())
     .pipe(concat('templates.js'))
