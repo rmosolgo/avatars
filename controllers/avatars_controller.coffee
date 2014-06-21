@@ -14,6 +14,10 @@ class App.AvatarsController extends App.ApplicationController
       else
         @redirect(action: "index")
 
-
+  edit: (params) ->
+    @render(false)
+    App.Avatar.find params.id, (err, record) =>
+      @set('avatar', record)
+      @render()
 
 

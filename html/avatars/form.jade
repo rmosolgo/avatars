@@ -1,0 +1,55 @@
+div(data-view='AvatarsFormView')
+  .row
+    .col-sm-12
+      ul.list-unstyled.alert.alert-warning(data-showif='avatar.errors.length')
+        li(data-foreach-e='avatar.errors' data-bind='e.fullMessage')
+
+  .row
+    .col-sm-4
+      .form-group
+        input.form-control(type='text' placeholder="Who is this?" data-bind='avatar.name')
+    .col-sm-4
+      .form-group
+        select.form-control(data-bind='selectedComponentId')
+          option Select a Component
+          option(data-foreach-component='Component.all' data-bind='component.name' data-bind-value='component.id')
+  .row
+    .col-sm-6
+      .well.well-small
+        canvas#new-avatar(style='height:300px; width:300px; border: 1px solid black; cursor:pointer;')
+    .col-sm-6
+      .row
+        .col-sm-6
+          h3
+            span Active Feature:&nbsp;
+            br
+            small(data-bind='currentItem.feature.name')
+          .img-container(style='height:100px;')
+            img(style='max-height:100px' data-bind-src='currentItem.feature.imageDataURI')
+        .col-sm-6
+          h4 Your Features:
+          ul.list-unstyled
+            li(data-foreach-feature='avatar.features')
+              span.btn.btn-link(data-bind='feature.name' data-event-click='activateFeature | withArguments feature')
+      .row
+        .col-sm-3
+          a.btn.btn-primary(data-event-click='zoomIn') Zoom In
+        .col-sm-3
+          a.btn.btn-primary(data-event-click='zoomOut') Zoom Out
+        .col-sm-3
+          a.btn.btn-primary(data-event-click='rotateLeft') Rotate Left
+        .col-sm-3
+          a.btn.btn-primary(data-event-click='rotateRight') Rotate Right
+      br
+      .row
+        .col-sm-3
+          a.btn.btn-primary(data-event-click='bringToFront') Bring to Front
+        .col-sm-3
+          a.btn.btn-primary(data-event-click='sendToBack') Send to Back
+        .col-sm-3
+          a.btn.btn-danger(data-event-click='remove') Remove
+  .row
+    .col-md-2
+      a.btn.btn-primary(data-event-click='downloadAvatar') Download Avatar
+    .col-sm-2
+      a.btn.btn-success(data-event-click='saveAvatar') Save Avatar

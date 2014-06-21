@@ -3,10 +3,7 @@ var PRELOAD_TEMPLATES = true
 
 gulp.task('default', ['harp'], function(){
   var tasks = ["build"]
-  gulp.watch('./**/*.coffee', tasks)
-  gulp.watch('./**/*.html', tasks)
-  gulp.watch('./**/*.jade', tasks)
-  gulp.watch('./**/*.scss', tasks)
+  gulp.watch(['./**/*.coffee', './**/*.html', './**/*.jade', './**/*.scss'], tasks)
 });
 
 // BUILD BATMANJS APP

@@ -46,6 +46,10 @@
 
     Avatar.encode('imageDataURI', 'name');
 
+    Avatar.hasMany('features', {
+      saveInline: true
+    });
+
     Avatar.validate('name', {
       presence: true
     });
@@ -101,6 +105,46 @@
     };
 
     return Component;
+
+  })(Batman.Model);
+
+  App.Feature = (function(_super) {
+    __extends(Feature, _super);
+
+    function Feature() {
+      return Feature.__super__.constructor.apply(this, arguments);
+    }
+
+    Feature.resourceName = 'feature';
+
+    Feature.persist(BatFire.Storage);
+
+    Feature.encode('name', 'imageDataURI', 'x', 'y', 'scale', 'rotation');
+
+    Feature.belongsTo('avatar', {
+      inverseOf: 'features'
+    });
+
+    Feature.prototype.updateFromRaster = function() {
+      var raster;
+      raster = this.get('raster');
+      this.set('x', raster.position.x);
+      this.set('y', raster.position.y);
+      this.set('scale', raster.scaling.x);
+      return this.set('rotation', raster.rotation);
+    };
+
+    Feature.prototype.generateRaster = function(paperObj) {
+      var raster;
+      raster = new paperObj.Raster(this.get('imageDataURI'), [this.get('x'), this.get('y')]);
+      raster.scale(this.get('scale') || 1);
+      raster.rotate(this.get('rotation') || 0);
+      this.set('raster', raster);
+      raster.feature = this;
+      return raster;
+    };
+
+    return Feature;
 
   })(Batman.Model);
 
@@ -174,6 +218,16 @@
       })(this));
     };
 
+    AvatarsController.prototype.edit = function(params) {
+      this.render(false);
+      return App.Avatar.find(params.id, (function(_this) {
+        return function(err, record) {
+          _this.set('avatar', record);
+          return _this.render();
+        };
+      })(this));
+    };
+
     return AvatarsController;
 
   })(App.ApplicationController);
@@ -221,27 +275,27 @@
 
   })(App.ApplicationController);
 
-  App.AvatarsNewView = (function(_super) {
-    __extends(AvatarsNewView, _super);
+  App.AvatarsFormView = (function(_super) {
+    __extends(AvatarsFormView, _super);
 
-    function AvatarsNewView() {
-      AvatarsNewView.__super__.constructor.apply(this, arguments);
+    function AvatarsFormView() {
+      AvatarsFormView.__super__.constructor.apply(this, arguments);
       this.set('selectedComponentId', null);
       this.observe('selectedComponent', (function(_this) {
         return function(nv, ov) {
           if (nv != null) {
-            return _this.addComponent();
+            return _this.addFeature(nv);
           }
         };
       })(this));
     }
 
-    AvatarsNewView.accessor('selectedComponent', function() {
+    AvatarsFormView.accessor('selectedComponent', function() {
       return App.Component.get('loaded.indexedByUnique.id').get(this.get('selectedComponentId'));
     });
 
-    AvatarsNewView.prototype.on('viewDidAppear', function() {
-      var initialPoint, tool;
+    AvatarsFormView.prototype.on('viewDidAppear', function() {
+      var tool;
       if (this.canvas != null) {
         return;
       }
@@ -249,7 +303,6 @@
       this.canvas = $(this.node).find('canvas')[0];
       this.scope.setup(this.canvas);
       tool = new Tool;
-      initialPoint = null;
       tool.onMouseDown = (function(_this) {
         return function(e) {
           var currentItem, item, _i, _len, _ref, _results;
@@ -277,11 +330,10 @@
           }
         };
       })(this);
-      return tool.onMouseDrag = (function(_this) {
+      tool.onMouseDrag = (function(_this) {
         return function(e) {
           var lastPostion, newPosition, _ref, _ref1;
-          if (e.delta != null) {
-            lastPostion = (_ref = _this.get('currentItem')) != null ? _ref.position : void 0;
+          if ((e.delta != null) && (lastPostion = (_ref = _this.get('currentItem')) != null ? _ref.position : void 0)) {
             newPosition = [lastPostion.x + e.delta.x, lastPostion.y + e.delta.y];
             if ((_ref1 = _this.get('currentItem')) != null) {
               _ref1.position = newPosition;
@@ -290,17 +342,18 @@
           }
         };
       })(this);
+      return this.loadAvatar();
     });
 
-    AvatarsNewView.prototype._testItem = function(item, point) {
-      var targetItemIsPresent, targetItemTest;
+    AvatarsFormView.prototype._testItem = function(item, point) {
+      var targetItemTest;
       targetItemTest = item.hitTest(point, {
         fill: true
       });
-      return targetItemIsPresent = targetItemTest.color.alpha !== 0;
+      return (targetItemTest != null) && targetItemTest.color.alpha !== 0;
     };
 
-    AvatarsNewView.prototype.zoomOut = function() {
+    AvatarsFormView.prototype.zoomOut = function() {
       var _ref;
       if ((_ref = this.get('currentItem')) != null) {
         _ref.scale(0.9);
@@ -308,7 +361,7 @@
       return this._updateAvatar();
     };
 
-    AvatarsNewView.prototype.zoomIn = function() {
+    AvatarsFormView.prototype.zoomIn = function() {
       var _ref;
       if ((_ref = this.get('currentItem')) != null) {
         _ref.scale(1.1);
@@ -316,16 +369,18 @@
       return this._updateAvatar();
     };
 
-    AvatarsNewView.prototype.remove = function() {
-      var _ref;
-      if ((_ref = this.get('currentItem')) != null) {
-        _ref.remove();
+    AvatarsFormView.prototype.remove = function() {
+      var raster;
+      if (!(raster = this.get('currentItem'))) {
+        return;
       }
+      this.controller.get('avatar.features').remove(raster.feature);
+      raster.remove();
       this.unset('currentItem');
       return this._updateAvatar();
     };
 
-    AvatarsNewView.prototype.rotateLeft = function() {
+    AvatarsFormView.prototype.rotateLeft = function() {
       var _ref;
       if ((_ref = this.get('currentItem')) != null) {
         _ref.rotate(-5);
@@ -333,7 +388,7 @@
       return this._updateAvatar();
     };
 
-    AvatarsNewView.prototype.rotateRight = function() {
+    AvatarsFormView.prototype.rotateRight = function() {
       var _ref;
       if ((_ref = this.get('currentItem')) != null) {
         _ref.rotate(5);
@@ -341,7 +396,7 @@
       return this._updateAvatar();
     };
 
-    AvatarsNewView.prototype.sendToBack = function() {
+    AvatarsFormView.prototype.sendToBack = function() {
       var _ref;
       if ((_ref = this.get('currentItem')) != null) {
         _ref.sendToBack();
@@ -349,7 +404,7 @@
       return this._updateAvatar();
     };
 
-    AvatarsNewView.prototype.bringToFront = function() {
+    AvatarsFormView.prototype.bringToFront = function() {
       var _ref;
       if ((_ref = this.get('currentItem')) != null) {
         _ref.bringToFront();
@@ -357,21 +412,35 @@
       return this._updateAvatar();
     };
 
-    AvatarsNewView.prototype._updateAvatar = function() {
+    AvatarsFormView.prototype._updateAvatar = function() {
       paper.view.draw();
       return this.controller.get('avatar').set('imageDataURI', this.canvas.toDataURL());
     };
 
-    AvatarsNewView.prototype.addComponent = function() {
-      var component, raster;
-      component = this.get('selectedComponent');
-      raster = new paper.Raster(component.get('imageDataURI'), paper.view.center);
-      raster.component = component;
+    AvatarsFormView.prototype.addFeature = function(component) {
+      var feature, imageDataURI, name, raster, x, y, _ref;
+      imageDataURI = component.get('imageDataURI');
+      name = component.get('name');
+      _ref = paper.view.center, x = _ref.x, y = _ref.y;
+      raster = new paper.Raster(imageDataURI, [x, y]);
+      feature = this.controller.get('avatar.features').build({
+        name: name,
+        imageDataURI: imageDataURI,
+        x: x,
+        y: y,
+        scale: 1,
+        raster: raster
+      });
+      raster.feature = feature;
       this.unset('selectedComponentId');
       return this._updateAvatar();
     };
 
-    AvatarsNewView.prototype.downloadAvatar = function() {
+    AvatarsFormView.prototype.activateFeature = function(feature) {
+      return this.set('currentItem', feature.get('raster'));
+    };
+
+    AvatarsFormView.prototype.downloadAvatar = function() {
       var link, uri;
       uri = this.controller.get('avatar.imageDataURI');
       link = document.createElement("a");
@@ -380,7 +449,25 @@
       return link.click();
     };
 
-    return AvatarsNewView;
+    AvatarsFormView.prototype.saveAvatar = function() {
+      var avatar;
+      avatar = this.controller.get('avatar');
+      avatar.get('features').forEach(function(f) {
+        return f.updateFromRaster();
+      });
+      return avatar.save();
+    };
+
+    AvatarsFormView.prototype.loadAvatar = function() {
+      var avatar;
+      avatar = this.controller.get('avatar');
+      return avatar.get('features').forEach(function(f) {
+        var raster;
+        return raster = f.generateRaster(paper);
+      });
+    };
+
+    return AvatarsFormView;
 
   })(Batman.View);
 

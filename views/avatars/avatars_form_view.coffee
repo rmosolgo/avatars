@@ -1,10 +1,10 @@
-class App.AvatarsNewView extends Batman.View
+class App.AvatarsFormView extends Batman.View
   constructor: ->
     super
     @set 'selectedComponentId', null
     @observe 'selectedComponent', (nv, ov) =>
       if nv?
-        @addComponent()
+        @addFeature(nv)
 
   @accessor 'selectedComponent', ->
     App.Component.get('loaded.indexedByUnique.id').get(@get('selectedComponentId'))
@@ -16,7 +16,6 @@ class App.AvatarsNewView extends Batman.View
     @scope.setup(@canvas)
     tool = new Tool
 
-    initialPoint = null
     tool.onMouseDown = (e) =>
       return unless e.item?
       currentItem = @get('currentItem')
@@ -33,15 +32,16 @@ class App.AvatarsNewView extends Batman.View
             break
 
     tool.onMouseDrag = (e) =>
-      if e.delta?
-        lastPostion = @get('currentItem')?.position
+      if e.delta? && lastPostion = @get('currentItem')?.position
         newPosition = [lastPostion.x + e.delta.x, lastPostion.y + e.delta.y]
         @get('currentItem')?.position = newPosition
         @_updateAvatar()
 
+    @loadAvatar()
+
   _testItem: (item, point) ->
     targetItemTest = item.hitTest(point, fill: true)
-    targetItemIsPresent = targetItemTest.color.alpha isnt 0
+    targetItemTest? and targetItemTest.color.alpha isnt 0
 
   zoomOut: ->
     @get('currentItem')?.scale(0.9)
@@ -52,7 +52,9 @@ class App.AvatarsNewView extends Batman.View
     @_updateAvatar()
 
   remove: ->
-    @get('currentItem')?.remove()
+    return unless raster = @get('currentItem')
+    @controller.get('avatar.features').remove(raster.feature)
+    raster.remove()
     @unset('currentItem')
     @_updateAvatar()
 
@@ -76,15 +78,28 @@ class App.AvatarsNewView extends Batman.View
     paper.view.draw()
     @controller.get('avatar').set('imageDataURI', @canvas.toDataURL())
 
-  addComponent: ->
-    component = @get('selectedComponent')
+  addFeature: (component) ->
+    imageDataURI = component.get('imageDataURI')
+    name = component.get('name')
+    {x, y} = paper.view.center
     raster = new paper.Raster(
-      component.get('imageDataURI')
-      paper.view.center # || record.get('defaultPosition')
+      imageDataURI
+      [x, y]
       )
-    raster.component = component
+
+    feature = @controller.get('avatar.features').build({
+      name,
+      imageDataURI,
+      x, y, scale: 1,
+      raster
+      })
+
+    raster.feature = feature
     @unset('selectedComponentId')
     @_updateAvatar()
+
+  activateFeature: (feature) ->
+    @set('currentItem', feature.get('raster'))
 
   downloadAvatar: ->
     uri = @controller.get('avatar.imageDataURI')
@@ -92,3 +107,13 @@ class App.AvatarsNewView extends Batman.View
     link.download = "avatar.png"
     link.href = uri
     link.click()
+
+  saveAvatar: ->
+    avatar = @controller.get('avatar')
+    avatar.get('features').forEach (f) -> f.updateFromRaster()
+    avatar.save()
+
+  loadAvatar: ->
+    avatar = @controller.get('avatar')
+    avatar.get('features').forEach (f) ->
+      raster = f.generateRaster(paper)
