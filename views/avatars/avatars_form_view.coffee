@@ -42,7 +42,7 @@ class App.AvatarsFormView extends App.AvatarCanvasView
 
   moveBy: (x, y)->
     return unless lastPostion = @get('currentItem')?.position
-    newPosition = [lastPostion.x, lastPostion.y + y]
+    newPosition = [lastPostion.x + x, lastPostion.y + y]
     @get('currentItem')?.position = newPosition
     @canvasWasChanged()
 

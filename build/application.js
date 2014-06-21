@@ -560,7 +560,7 @@
       if (!(lastPostion = (_ref = this.get('currentItem')) != null ? _ref.position : void 0)) {
         return;
       }
-      newPosition = [lastPostion.x, lastPostion.y + y];
+      newPosition = [lastPostion.x + x, lastPostion.y + y];
       if ((_ref1 = this.get('currentItem')) != null) {
         _ref1.position = newPosition;
       }
