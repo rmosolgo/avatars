@@ -121,7 +121,7 @@
 
     Feature.persist(BatFire.Storage);
 
-    Feature.encode('name', 'imageDataURI', 'x', 'y', 'scale', 'rotation');
+    Feature.encode('name', 'imageDataURI', 'x', 'y', 'scale', 'rotation', 'index');
 
     Feature.belongsTo('avatar', {
       inverseOf: 'features'
@@ -133,7 +133,8 @@
       this.set('x', raster.position.x);
       this.set('y', raster.position.y);
       this.set('scale', raster.scaling.x);
-      return this.set('rotation', raster.rotation);
+      this.set('rotation', raster.rotation);
+      return this.set('index', raster.index);
     };
 
     Feature.prototype.generateRaster = function(paperObj) {
@@ -280,12 +281,15 @@
   App.AvatarsFormView = (function(_super) {
     __extends(AvatarsFormView, _super);
 
+    AvatarsFormView.prototype.KEY_SENSITIVITY = 3;
+
     function AvatarsFormView() {
       AvatarsFormView.__super__.constructor.apply(this, arguments);
       this.set('selectedComponentId', null);
       this.observe('selectedComponent', (function(_this) {
         return function(nv, ov) {
           if (nv != null) {
+            console.log("adding component", nv);
             return _this.addFeature(nv);
           }
         };
@@ -296,8 +300,13 @@
       return App.Component.get('loaded.indexedByUnique.id').get(this.get('selectedComponentId'));
     });
 
-    AvatarsFormView.prototype.on('viewDidAppear', function() {
-      var KEY_SENSITIVITY, tool;
+    AvatarsFormView.prototype.viewWillDisappear = function() {
+      console.log("restoring Batman.redirect");
+      return Batman.redirect = this._oldRedirect;
+    };
+
+    AvatarsFormView.prototype.viewDidAppear = function() {
+      var tool;
       if (this.canvas != null) {
         return;
       }
@@ -305,6 +314,26 @@
       this.canvas = $(this.node).find('canvas')[0];
       this.scope.setup(this.canvas);
       tool = new Tool;
+      $(window).on("beforeunload", this._beforeUnload = (function(_this) {
+        return function() {
+          if (_this.get('wasChanged')) {
+            return "Your changes won't be saved!";
+          } else {
+            return void 0;
+          }
+        };
+      })(this));
+      this._oldRedirect = Batman.redirect;
+      Batman.redirect = (function(_this) {
+        return function() {
+          var msg;
+          if ((msg = _this._beforeUnload()) && !confirm("" + msg + " \nAre you sure you want to leave this page?")) {
+            return console.log("Navigation prevented", msg);
+          } else {
+            return _this._oldRedirect.apply(Batman, arguments);
+          }
+        };
+      })(this);
       tool.onMouseDown = (function(_this) {
         return function(e) {
           var currentItem, item, _i, _len, _ref, _results;
@@ -336,35 +365,23 @@
       tool.onMouseDrag = (function(_this) {
         return function(e) {
           if (e.delta != null) {
-            _this.moveBy(e.delta.x, 0);
+            _this.moveBy(e.delta.x, e.delta.y);
             return _this._updateAvatar();
           }
         };
       })(this);
-      KEY_SENSITIVITY = 3;
       tool.onKeyDown = (function(_this) {
         return function(e) {
-          switch (e.key) {
-            case "up":
-              _this.moveBy(0, -KEY_SENSITIVITY);
-              break;
-            case "down":
-              _this.moveBy(0, KEY_SENSITIVITY);
-              break;
-            case "left":
-              _this.rotateLeft();
-              break;
-            case "right":
-              _this.rotateRight();
-              break;
-            case "backspace":
-              _this.remove();
+          var handler;
+          if (handler = _this.KEY_HANDLERS[e.key]) {
+            return handler.call(_this);
+          } else {
+            return console.log(e.key);
           }
-          return false;
         };
       })(this);
       return this.loadAvatar();
-    });
+    };
 
     AvatarsFormView.prototype._testItem = function(item, point) {
       var targetItemTest;
@@ -380,7 +397,10 @@
         return;
       }
       newPosition = [lastPostion.x + x, lastPostion.y + y];
-      return (_ref1 = this.get('currentItem')) != null ? _ref1.position = newPosition : void 0;
+      if ((_ref1 = this.get('currentItem')) != null) {
+        _ref1.position = newPosition;
+      }
+      return this._updateAvatar();
     };
 
     AvatarsFormView.prototype.zoomOut = function() {
@@ -416,41 +436,49 @@
     };
 
     AvatarsFormView.prototype.sendToBack = function() {
-      var _ref;
-      if ((_ref = this.get('currentItem')) != null) {
-        _ref.sendToBack();
+      var item;
+      if (!(item = this.get('currentItem'))) {
+        return;
       }
+      item.sendToBack();
+      item.feature.set('index', item.index);
       return this._updateAvatar();
     };
 
     AvatarsFormView.prototype.bringToFront = function() {
-      var _ref;
-      if ((_ref = this.get('currentItem')) != null) {
-        _ref.bringToFront();
+      var item;
+      if (!(item = this.get('currentItem'))) {
+        return;
       }
+      item.bringToFront();
+      item.feature.set('index', item.index);
       return this._updateAvatar();
     };
 
     AvatarsFormView.prototype._updateAvatar = function() {
       paper.view.draw();
+      this.set('wasChanged', true);
       return this.controller.get('avatar').set('imageDataURI', this.canvas.toDataURL());
     };
 
     AvatarsFormView.prototype.addFeature = function(component) {
-      var feature, imageDataURI, name, raster, x, y, _ref;
+      var feature, imageDataURI, index, name, raster, x, y, _ref;
       imageDataURI = component.get('imageDataURI');
       name = component.get('name');
       _ref = paper.view.center, x = _ref.x, y = _ref.y;
       raster = new paper.Raster(imageDataURI, [x, y]);
+      index = raster.index;
       feature = this.controller.get('avatar.features').build({
         name: name,
         imageDataURI: imageDataURI,
         x: x,
         y: y,
         scale: 1,
-        raster: raster
+        raster: raster,
+        index: index
       });
       raster.feature = feature;
+      this.set('currentItem', raster);
       this.unset('selectedComponentId');
       return this._updateAvatar();
     };
@@ -491,20 +519,73 @@
 
     AvatarsFormView.prototype.saveAvatar = function() {
       var avatar;
+      this.set('saveMessage', "Saving...");
       avatar = this.controller.get('avatar');
       avatar.get('features').forEach(function(f) {
         return f.updateFromRaster();
       });
-      return avatar.save();
+      return avatar.save((function(_this) {
+        return function() {
+          _this.set('wasChanged', false);
+          return _this.unset('saveMessage');
+        };
+      })(this));
     };
 
     AvatarsFormView.prototype.loadAvatar = function() {
       var avatar;
       avatar = this.controller.get('avatar');
-      return avatar.get('features').forEach(function(f) {
+      return avatar.get('features.sortedBy.index').forEach(function(f) {
         var raster;
         return raster = f.generateRaster(paper);
       });
+    };
+
+    AvatarsFormView.prototype._showGrid = function() {
+      this._xGrid || (this._xGrid = paper.Path.Line([0, 150], [300, 150]));
+      this._xGrid.strokeColor = "black";
+      this._yGrid || (this._yGrid = paper.Path.Line([150, 0], [150, 300]));
+      this._yGrid.strokeColor = "black";
+      return paper.view.draw();
+    };
+
+    AvatarsFormView.prototype.KEY_HANDLERS = {
+      up: function() {
+        return this.moveBy(0, -this.KEY_SENSITIVITY);
+      },
+      down: function() {
+        return this.moveBy(0, this.KEY_SENSITIVITY);
+      },
+      left: function() {
+        return this.moveBy(-this.KEY_SENSITIVITY, 0);
+      },
+      right: function() {
+        return this.moveBy(this.KEY_SENSITIVITY, 0);
+      },
+      backspace: function() {
+        if (document.activeElement.tagName.toUpperCase() === "BODY") {
+          this.remove();
+          return false;
+        }
+      },
+      "-": function() {
+        return this.zoomOut();
+      },
+      "_": function() {
+        return this.zoomOut();
+      },
+      "+": function() {
+        return this.zoomIn();
+      },
+      "-": function() {
+        return this.zoomIn();
+      },
+      "<": function() {
+        return this.rotateLeft();
+      },
+      ">": function() {
+        return this.rotateRight();
+      }
     };
 
     return AvatarsFormView;
@@ -514,7 +595,7 @@
 }).call(this);
 
 Batman.View.store.set('/avatars/edit', '<div data-partial=\"avatars/form\"></div>');
-Batman.View.store.set('/avatars/form', '<div data-view=\"AvatarsFormView\"><div class=\"row\"><div class=\"col-sm-12\"><ul data-showif=\"avatar.errors.length\" class=\"list-unstyled alert alert-warning\"><li data-foreach-e=\"avatar.errors\" data-bind=\"e.fullMessage\"></li></ul></div></div><div class=\"row\"><div class=\"col-sm-4\"><div class=\"form-group\"><input type=\"text\" placeholder=\"Who is this?\" data-bind=\"avatar.name\" class=\"form-control\"/></div></div><div class=\"col-sm-4\"><div class=\"form-group\"><select data-bind=\"selectedComponentId\" class=\"form-control\"><option>Select a Component</option><option data-foreach-component=\"Component.all\" data-bind=\"component.name\" data-bind-value=\"component.id\"></option></select></div></div></div><div class=\"row\"><div class=\"col-sm-6\"><div class=\"well well-small\"><canvas id=\"new-avatar\" style=\"height:300px; width:300px; border: 1px solid black; cursor:pointer;\"></canvas></div></div><div class=\"col-sm-6\"><div class=\"row\"><div class=\"col-sm-6\"><h3><span>Active Feature:&nbsp;</span><br/><small data-bind=\"currentItem.feature.name\"></small></h3><div style=\"height:100px;\" class=\"img-container\"><img style=\"max-height:100px\" data-bind-src=\"currentItem.feature.imageDataURI\"/></div></div><div class=\"col-sm-6\"><h4>Your Features:</h4><ul class=\"list-unstyled\"><li data-foreach-feature=\"avatar.features\"><a data-bind=\"feature.name\" data-event-click=\"activateFeature | withArguments feature\"></a><a data-event-click=\"removeFeature | withArguments feature\" class=\"text-danger pull-right\">&times;</a></li></ul></div></div><div class=\"row\"><div class=\"col-sm-3\"><a data-event-click=\"zoomIn\" class=\"btn btn-primary\">Zoom In</a></div><div class=\"col-sm-3\"><a data-event-click=\"zoomOut\" class=\"btn btn-primary\">Zoom Out</a></div><div class=\"col-sm-3\"><a data-event-click=\"rotateLeft\" class=\"btn btn-primary\">Rotate Left</a></div><div class=\"col-sm-3\"><a data-event-click=\"rotateRight\" class=\"btn btn-primary\">Rotate Right</a></div></div><br/><div class=\"row\"><div class=\"col-sm-3\"><a data-event-click=\"bringToFront\" class=\"btn btn-primary\">Bring to Front</a></div><div class=\"col-sm-3\"><a data-event-click=\"sendToBack\" class=\"btn btn-primary\">Send to Back</a></div><div class=\"col-sm-3\"><a data-event-click=\"remove\" class=\"btn btn-danger\">Remove</a></div></div></div></div><div class=\"row\"><div class=\"col-md-2\"><a data-event-click=\"downloadAvatar\" class=\"btn btn-primary\">Download Avatar</a></div><div class=\"col-sm-2\"><a data-event-click=\"saveAvatar\" class=\"btn btn-success\">Save Avatar</a></div></div></div>');
+Batman.View.store.set('/avatars/form', '<div data-view=\"AvatarsFormView\"><div class=\"row\"><div class=\"col-sm-12\"><ul data-showif=\"avatar.errors.length\" class=\"list-unstyled alert alert-warning\"><li data-foreach-e=\"avatar.errors\" data-bind=\"e.fullMessage\"></li></ul></div></div><div class=\"row\"><div class=\"col-sm-4\"><div class=\"form-group\"><input type=\"text\" placeholder=\"Who is this?\" data-bind=\"avatar.name\" class=\"form-control\"/></div></div><div class=\"col-sm-4\"><div class=\"form-group\"><select data-bind=\"selectedComponentId\" class=\"form-control\"><option>Select a Component</option><option data-foreach-component=\"Component.all\" data-bind=\"component.name\" data-bind-value=\"component.id\"></option></select></div></div></div><div class=\"row\"><div class=\"col-sm-6\"><div class=\"well well-small\"><canvas id=\"new-avatar\" style=\"height:300px; width:300px; border: 1px solid black; cursor:pointer;\"></canvas></div></div><div class=\"col-sm-6\"><div class=\"row\"><div class=\"col-sm-6\"><h3><span>Active Feature:&nbsp;</span><br/><small data-bind=\"currentItem.feature.name\"></small></h3><div style=\"height:100px;\" class=\"img-container\"><img style=\"max-height:100px\" data-bind-src=\"currentItem.feature.imageDataURI\"/></div></div><div class=\"col-sm-6\"><h4>Your Features:</h4><ul class=\"list-unstyled\"><li data-foreach-feature=\"avatar.features.sortedByDescending.index\"><a data-bind=\"feature.name\" data-event-click=\"activateFeature | withArguments feature\"></a><a data-event-click=\"removeFeature | withArguments feature\" class=\"text-danger pull-right\">&times;</a></li></ul></div></div><div class=\"row\"><div class=\"col-sm-3\"><a data-event-click=\"zoomIn\" class=\"btn btn-primary\">Zoom In</a></div><div class=\"col-sm-3\"><a data-event-click=\"zoomOut\" class=\"btn btn-primary\">Zoom Out</a></div><div class=\"col-sm-3\"><a data-event-click=\"rotateLeft\" class=\"btn btn-primary\">Rotate Left</a></div><div class=\"col-sm-3\"><a data-event-click=\"rotateRight\" class=\"btn btn-primary\">Rotate Right</a></div></div><br/><div class=\"row\"><div class=\"col-sm-3\"><a data-event-click=\"bringToFront\" class=\"btn btn-primary\">Bring to Front</a></div><div class=\"col-sm-3\"><a data-event-click=\"sendToBack\" class=\"btn btn-primary\">Send to Back</a></div><div class=\"col-sm-3\"><a data-event-click=\"remove\" class=\"btn btn-danger\">Remove</a></div></div></div></div><div class=\"row\"><div class=\"col-sm-4\"><a data-event-click=\"downloadAvatar\" class=\"btn btn-primary\">Download Avatar</a></div><div class=\"col-sm-4\"><a data-addclass-btn-warning=\"wasChanged\" data-event-click=\"saveAvatar\" data-bind=\"saveMessage | default &quot;Save Avatar&quot;\" class=\"btn btn-success\"></a></div></div></div>');
 Batman.View.store.set('/avatars/index', '<div class=\"row\"><div data-foreach-avatar=\"avatars\" class=\"col-sm-3\"><div class=\"thumbnail\"><div style=\"height:200px;width:100%\" class=\"img-container\"><img style=\"max-height:100%; max-width:100%\" data-bind-src=\"avatar.imageDataURI\"/></div><div class=\"caption\"><p data-bind=\"avatar.name\"></p><p><a data-event-click=\"destroy | withArguments avatar\" class=\"btn btn-danger\">Delete</a><a data-route=\"routes.avatars[avatar].edit\" class=\"btn btn-primary\">Edit</a></p></div></div></div></div>');
 Batman.View.store.set('/avatars/new', '<div data-partial=\"avatars/form\"></div>');
 Batman.View.store.set('/components/edit', '<div data-partial=\"components/form\"></div>');

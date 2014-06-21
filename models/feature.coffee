@@ -1,7 +1,7 @@
 class App.Feature extends Batman.Model
   @resourceName: 'feature'
   @persist BatFire.Storage
-  @encode 'name', 'imageDataURI', 'x', 'y', 'scale', 'rotation'
+  @encode 'name', 'imageDataURI', 'x', 'y', 'scale', 'rotation', 'index'
   @belongsTo 'avatar', inverseOf: 'features'
 
   updateFromRaster: ->
@@ -10,6 +10,7 @@ class App.Feature extends Batman.Model
     @set 'y', raster.position.y
     @set 'scale', raster.scaling.x
     @set 'rotation', raster.rotation
+    @set 'index', raster.index
 
   generateRaster: (paperObj) ->
     raster = new paperObj.Raster(

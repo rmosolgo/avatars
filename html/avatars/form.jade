@@ -29,7 +29,7 @@ div(data-view='AvatarsFormView')
         .col-sm-6
           h4 Your Features:
           ul.list-unstyled
-            li(data-foreach-feature='avatar.features')
+            li(data-foreach-feature='avatar.features.sortedByDescending.index')
               a(data-bind='feature.name' data-event-click='activateFeature | withArguments feature')
               a.text-danger.pull-right(data-event-click='removeFeature | withArguments feature') &times;
       .row
@@ -50,7 +50,7 @@ div(data-view='AvatarsFormView')
         .col-sm-3
           a.btn.btn-danger(data-event-click='remove') Remove
   .row
-    .col-md-2
+    .col-sm-4
       a.btn.btn-primary(data-event-click='downloadAvatar') Download Avatar
-    .col-sm-2
-      a.btn.btn-success(data-event-click='saveAvatar') Save Avatar
+    .col-sm-4
+      a.btn.btn-success(data-addclass-btn-warning='wasChanged' data-event-click='saveAvatar' data-bind='saveMessage | default "Save Avatar"')
