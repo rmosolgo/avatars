@@ -10,6 +10,7 @@ class App.AvatarsFormView extends Batman.View
     App.Component.get('loaded.indexedByUnique.id').get(@get('selectedComponentId'))
 
   @::on 'viewDidAppear', ->
+
     return if @canvas?
     @scope = new paper.PaperScope
     @canvas = $(@node).find('canvas')[0]
@@ -17,6 +18,7 @@ class App.AvatarsFormView extends Batman.View
     tool = new Tool
 
     tool.onMouseDown = (e) =>
+      $('input, select').blur()
       return unless e.item?
       currentItem = @get('currentItem')
       if @_testItem(e.item, e.point)
@@ -32,16 +34,36 @@ class App.AvatarsFormView extends Batman.View
             break
 
     tool.onMouseDrag = (e) =>
-      if e.delta? && lastPostion = @get('currentItem')?.position
-        newPosition = [lastPostion.x + e.delta.x, lastPostion.y + e.delta.y]
-        @get('currentItem')?.position = newPosition
+      if e.delta?
+        @moveBy(e.delta.x, 0)
         @_updateAvatar()
+
+    KEY_SENSITIVITY = 3
+    tool.onKeyDown = (e) =>
+      switch e.key
+        when "up"
+          @moveBy(0, -KEY_SENSITIVITY)
+        when "down"
+          @moveBy(0, KEY_SENSITIVITY)
+        when "left"
+          @rotateLeft()
+        when "right"
+          @rotateRight()
+        when "backspace"
+          @remove()
+      return false
+
 
     @loadAvatar()
 
   _testItem: (item, point) ->
     targetItemTest = item.hitTest(point, fill: true)
     targetItemTest? and targetItemTest.color.alpha isnt 0
+
+  moveBy: (x, y)->
+    return unless lastPostion = @get('currentItem')?.position
+    newPosition = [lastPostion.x + x, lastPostion.y + y]
+    @get('currentItem')?.position = newPosition
 
   zoomOut: ->
     @get('currentItem')?.scale(0.9)
@@ -51,12 +73,6 @@ class App.AvatarsFormView extends Batman.View
     @get('currentItem')?.scale(1.1)
     @_updateAvatar()
 
-  remove: ->
-    return unless raster = @get('currentItem')
-    @controller.get('avatar.features').remove(raster.feature)
-    raster.remove()
-    @unset('currentItem')
-    @_updateAvatar()
 
   rotateLeft: ->
     @get('currentItem')?.rotate(-5)
@@ -100,6 +116,20 @@ class App.AvatarsFormView extends Batman.View
 
   activateFeature: (feature) ->
     @set('currentItem', feature.get('raster'))
+
+  remove: ->
+    return unless raster = @get('currentItem')
+    @controller.get('avatar.features').remove(raster.feature)
+    raster.remove()
+    @unset('currentItem')
+    @_updateAvatar()
+
+  removeFeature: (feature) ->
+    @controller.get('avatar.features').remove(feature)
+    if raster = @get('currentItem')
+      @unset('currentItem')
+    raster.remove()
+    @_updateAvatar()
 
   downloadAvatar: ->
     uri = @controller.get('avatar.imageDataURI')

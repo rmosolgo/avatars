@@ -69,7 +69,9 @@
 
     Component.persist(BatFire.Storage);
 
-    Component.encode('imageDataURI', 'name', 'description');
+    Component.TYPES = ["Hair", "Eyes", "Nose", "Mouth", "Head", "Body"];
+
+    Component.encode('imageDataURI', 'name', 'description', 'type');
 
     Component.validate('imageDataURI', {
       presence: true
@@ -295,7 +297,7 @@
     });
 
     AvatarsFormView.prototype.on('viewDidAppear', function() {
-      var tool;
+      var KEY_SENSITIVITY, tool;
       if (this.canvas != null) {
         return;
       }
@@ -306,6 +308,7 @@
       tool.onMouseDown = (function(_this) {
         return function(e) {
           var currentItem, item, _i, _len, _ref, _results;
+          $('input, select').blur();
           if (e.item == null) {
             return;
           }
@@ -332,14 +335,32 @@
       })(this);
       tool.onMouseDrag = (function(_this) {
         return function(e) {
-          var lastPostion, newPosition, _ref, _ref1;
-          if ((e.delta != null) && (lastPostion = (_ref = _this.get('currentItem')) != null ? _ref.position : void 0)) {
-            newPosition = [lastPostion.x + e.delta.x, lastPostion.y + e.delta.y];
-            if ((_ref1 = _this.get('currentItem')) != null) {
-              _ref1.position = newPosition;
-            }
+          if (e.delta != null) {
+            _this.moveBy(e.delta.x, 0);
             return _this._updateAvatar();
           }
+        };
+      })(this);
+      KEY_SENSITIVITY = 3;
+      tool.onKeyDown = (function(_this) {
+        return function(e) {
+          switch (e.key) {
+            case "up":
+              _this.moveBy(0, -KEY_SENSITIVITY);
+              break;
+            case "down":
+              _this.moveBy(0, KEY_SENSITIVITY);
+              break;
+            case "left":
+              _this.rotateLeft();
+              break;
+            case "right":
+              _this.rotateRight();
+              break;
+            case "backspace":
+              _this.remove();
+          }
+          return false;
         };
       })(this);
       return this.loadAvatar();
@@ -351,6 +372,15 @@
         fill: true
       });
       return (targetItemTest != null) && targetItemTest.color.alpha !== 0;
+    };
+
+    AvatarsFormView.prototype.moveBy = function(x, y) {
+      var lastPostion, newPosition, _ref, _ref1;
+      if (!(lastPostion = (_ref = this.get('currentItem')) != null ? _ref.position : void 0)) {
+        return;
+      }
+      newPosition = [lastPostion.x + x, lastPostion.y + y];
+      return (_ref1 = this.get('currentItem')) != null ? _ref1.position = newPosition : void 0;
     };
 
     AvatarsFormView.prototype.zoomOut = function() {
@@ -366,17 +396,6 @@
       if ((_ref = this.get('currentItem')) != null) {
         _ref.scale(1.1);
       }
-      return this._updateAvatar();
-    };
-
-    AvatarsFormView.prototype.remove = function() {
-      var raster;
-      if (!(raster = this.get('currentItem'))) {
-        return;
-      }
-      this.controller.get('avatar.features').remove(raster.feature);
-      raster.remove();
-      this.unset('currentItem');
       return this._updateAvatar();
     };
 
@@ -438,6 +457,27 @@
 
     AvatarsFormView.prototype.activateFeature = function(feature) {
       return this.set('currentItem', feature.get('raster'));
+    };
+
+    AvatarsFormView.prototype.remove = function() {
+      var raster;
+      if (!(raster = this.get('currentItem'))) {
+        return;
+      }
+      this.controller.get('avatar.features').remove(raster.feature);
+      raster.remove();
+      this.unset('currentItem');
+      return this._updateAvatar();
+    };
+
+    AvatarsFormView.prototype.removeFeature = function(feature) {
+      var raster;
+      this.controller.get('avatar.features').remove(feature);
+      if (raster = this.get('currentItem')) {
+        this.unset('currentItem');
+      }
+      raster.remove();
+      return this._updateAvatar();
     };
 
     AvatarsFormView.prototype.downloadAvatar = function() {

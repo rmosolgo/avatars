@@ -30,7 +30,8 @@ div(data-view='AvatarsFormView')
           h4 Your Features:
           ul.list-unstyled
             li(data-foreach-feature='avatar.features')
-              span.btn.btn-link(data-bind='feature.name' data-event-click='activateFeature | withArguments feature')
+              a(data-bind='feature.name' data-event-click='activateFeature | withArguments feature')
+              a.text-danger.pull-right(data-event-click='removeFeature | withArguments feature') &times;
       .row
         .col-sm-3
           a.btn.btn-primary(data-event-click='zoomIn') Zoom In

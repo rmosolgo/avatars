@@ -4,20 +4,32 @@ form(data-formfor-c='component' data-event-submit='save | withArguments componen
       ul.list-unstyled
         li(data-foreach-error='c.errors' data-bind='error.fullMessage')
   .row
-    .well
-      .img-container(style="height:200px;width:100%")
-        p(data-showif='c.imageDataURI | not') Upload an image to see a preview!
-        img(style='max-height:100%; max-width:100%' data-bind-src='c.imageDataURI')
+    .col-xs-6
+      .well
+        .img-container(style="height:200px;width:100%")
+          p(data-showif='c.imageDataURI | not') Upload an image to see a preview!
+          img(style='max-height:100%; max-width:100%' data-bind-src='c.imageDataURI')
+    .col-xs-6
+      .well
+        .img-container(style="height:200px;width:100%")
+          p(data-showif='c.imageDataURI | not') Upload an image to see a preview!
+          img(style='max-height:100%; max-width:100%' data-bind-src='c.imageDataURI')
   .row
-    .form-group
+    .form-group.col-xs-6
       label Name
       input.form-control(type='text' data-bind='c.name' placeholder='name')
-    .form-group
+    .form-group.col-xs-6
+      label Type
+      select.form-control(data-bind='component.type')
+        option(data-foreach-t='Component.TYPES' data-bind='t' data-bind-value='t')
+  .row
+    .form-group.col-xs-6
       label File
       input.form-control(type='file' data-bind='c.imageFile')
-    .form-group
+    .form-group.col-xs-6
       label Description
       textarea.form-control(data-bind='c.description' placeholder='description')
+  .row
     .form-group
       .row
         .col-xs-4
