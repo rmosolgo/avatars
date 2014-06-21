@@ -16,6 +16,7 @@ class App.AvatarCanvasView extends Batman.View
 
   viewWillDisappear: ->
     console.log "restoring Batman.redirect"
+    $(window).off("beforeunload", @_beforeUnload)
     Batman.redirect = @_oldRedirect
 
   viewDidAppear: ->

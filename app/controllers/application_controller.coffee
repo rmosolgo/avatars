@@ -8,6 +8,7 @@ class App.ApplicationController extends Batman.Controller
         callback?(err, record)
 
   destroy: (obj, callback) ->
+    return unless comfirm("Are you sure you want to delete this item?")
     obj.destroy (err, record) =>
       if err?
         throw err
