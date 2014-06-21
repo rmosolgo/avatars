@@ -2,7 +2,8 @@ class App.Component extends Batman.Model
   @resourceName: 'component'
   @persist BatFire.Storage
   @TYPES: ["Hair", "Eyes", "Nose", "Mouth", "Head", "Body"]
-  @encode 'imageDataURI', 'name', 'description', 'type'
+  @encode 'imageDataURI', 'name', 'description', 'type',
+    'defaultX', 'defaultY', 'defaultScale'
   @validate 'imageDataURI', presence: true
   @validate 'name', presence: true
 

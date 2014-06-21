@@ -7,13 +7,9 @@ class App.ComponentsController extends App.ApplicationController
 
   edit: (params) ->
     App.Component.find params.id, (err, record) =>
-      @set 'component', record
+      @set 'component', record.transaction()
       @render()
     @render(false)
-
-  save: (component) ->
-    super component, (e, r) =>
-      @redirect(action: "index")
 
   @accessor 'componentGroups', ->
     App.Component.get('all').inGroupsOf(4)

@@ -71,7 +71,7 @@
 
     Component.TYPES = ["Hair", "Eyes", "Nose", "Mouth", "Head", "Body"];
 
-    Component.encode('imageDataURI', 'name', 'description', 'type');
+    Component.encode('imageDataURI', 'name', 'description', 'type', 'defaultX', 'defaultY', 'defaultScale');
 
     Component.validate('imageDataURI', {
       presence: true
@@ -253,21 +253,11 @@
     ComponentsController.prototype.edit = function(params) {
       App.Component.find(params.id, (function(_this) {
         return function(err, record) {
-          _this.set('component', record);
+          _this.set('component', record.transaction());
           return _this.render();
         };
       })(this));
       return this.render(false);
-    };
-
-    ComponentsController.prototype.save = function(component) {
-      return ComponentsController.__super__.save.call(this, component, (function(_this) {
-        return function(e, r) {
-          return _this.redirect({
-            action: "index"
-          });
-        };
-      })(this));
     };
 
     ComponentsController.accessor('componentGroups', function() {
@@ -278,10 +268,242 @@
 
   })(App.ApplicationController);
 
+  App.AvatarCanvasView = (function(_super) {
+    __extends(AvatarCanvasView, _super);
+
+    function AvatarCanvasView() {
+      return AvatarCanvasView.__super__.constructor.apply(this, arguments);
+    }
+
+    AvatarCanvasView.prototype.KEY_SENSITIVITY = 3;
+
+    AvatarCanvasView.prototype._checkForChanges = function() {
+      $(window).on("beforeunload", this._beforeUnload = (function(_this) {
+        return function() {
+          if (_this.get('wasChanged')) {
+            return "Your changes won't be saved!";
+          } else {
+            return void 0;
+          }
+        };
+      })(this));
+      this._oldRedirect = Batman.redirect;
+      return Batman.redirect = (function(_this) {
+        return function() {
+          var msg;
+          if ((msg = _this._beforeUnload()) && !confirm("" + msg + " \nAre you sure you want to leave this page?")) {
+            return console.log("Navigation prevented", msg);
+          } else {
+            return _this._oldRedirect.apply(Batman, arguments);
+          }
+        };
+      })(this);
+    };
+
+    AvatarCanvasView.prototype.viewWillDisappear = function() {
+      console.log("restoring Batman.redirect");
+      return Batman.redirect = this._oldRedirect;
+    };
+
+    AvatarCanvasView.prototype.viewDidAppear = function() {
+      var tool;
+      if (this.canvas != null) {
+        return;
+      }
+      this.scope = new paper.PaperScope;
+      this.canvas = $(this.node).find('canvas')[0];
+      this.scope.setup(this.canvas);
+      tool = new Tool;
+      this._checkForChanges();
+      tool.onMouseDown = (function(_this) {
+        return function(e) {
+          return _this.onMouseDown(e);
+        };
+      })(this);
+      tool.onMouseDrag = (function(_this) {
+        return function(e) {
+          return _this.onMouseDrag(e);
+        };
+      })(this);
+      return tool.onKeyDown = (function(_this) {
+        return function(e) {
+          var handler;
+          if (handler = _this.KEY_HANDLERS[e.key]) {
+            return handler.call(_this);
+          } else {
+            return console.log(e.key);
+          }
+        };
+      })(this);
+    };
+
+    AvatarCanvasView.prototype.onMouseDown = function(e) {
+      var currentItem, item, _i, _len, _ref, _results;
+      $('input, select').blur();
+      if (e.item == null) {
+        return;
+      }
+      currentItem = this.get('currentItem');
+      if (this._testItem(e.item, e.point)) {
+        return this.set('currentItem', e.item);
+      } else if ((currentItem != null) && this._testItem(currentItem, e.point)) {
+
+      } else {
+        _ref = this.scope.project.activeLayer.children;
+        _results = [];
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          item = _ref[_i];
+          if (this._testItem(item, e.point)) {
+            this.set('currentItem', item);
+            break;
+          } else {
+            _results.push(void 0);
+          }
+        }
+        return _results;
+      }
+    };
+
+    AvatarCanvasView.prototype.onMouseDrag = function(e) {
+      if (e.delta != null) {
+        this.moveBy(e.delta.x, e.delta.y);
+        return this.canvasWasChanged();
+      }
+    };
+
+    AvatarCanvasView.prototype._testItem = function(item, point) {
+      var targetItemTest;
+      if (item.dontSelect) {
+        return false;
+      }
+      targetItemTest = item.hitTest(point, {
+        fill: true
+      });
+      return (targetItemTest != null) && targetItemTest.color.alpha !== 0;
+    };
+
+    AvatarCanvasView.prototype.moveBy = function(x, y) {
+      var lastPostion, newPosition, _ref, _ref1;
+      if (!(lastPostion = (_ref = this.get('currentItem')) != null ? _ref.position : void 0)) {
+        return;
+      }
+      newPosition = [lastPostion.x + x, lastPostion.y + y];
+      if ((_ref1 = this.get('currentItem')) != null) {
+        _ref1.position = newPosition;
+      }
+      return this.canvasWasChanged();
+    };
+
+    AvatarCanvasView.prototype.zoomOut = function() {
+      var _ref;
+      if ((_ref = this.get('currentItem')) != null) {
+        _ref.scale(0.9);
+      }
+      return this.canvasWasChanged();
+    };
+
+    AvatarCanvasView.prototype.zoomIn = function() {
+      var _ref;
+      if ((_ref = this.get('currentItem')) != null) {
+        _ref.scale(1.1);
+      }
+      return this.canvasWasChanged();
+    };
+
+    AvatarCanvasView.prototype.rotateLeft = function() {
+      var _ref;
+      if ((_ref = this.get('currentItem')) != null) {
+        _ref.rotate(-5);
+      }
+      return this.canvasWasChanged();
+    };
+
+    AvatarCanvasView.prototype.rotateRight = function() {
+      var _ref;
+      if ((_ref = this.get('currentItem')) != null) {
+        _ref.rotate(5);
+      }
+      return this.canvasWasChanged();
+    };
+
+    AvatarCanvasView.prototype.sendToBack = function() {
+      var item;
+      if (!(item = this.get('currentItem'))) {
+        return;
+      }
+      item.sendToBack();
+      item.feature.set('index', item.index);
+      return this.canvasWasChanged();
+    };
+
+    AvatarCanvasView.prototype.bringToFront = function() {
+      var item;
+      if (!(item = this.get('currentItem'))) {
+        return;
+      }
+      item.bringToFront();
+      item.feature.set('index', item.index);
+      return this.canvasWasChanged();
+    };
+
+    AvatarCanvasView.prototype.canvasWasChanged = function() {
+      paper.view.draw();
+      return this.set('wasChanged', true);
+    };
+
+    AvatarCanvasView.prototype._showGrid = function() {
+      this._xGrid || (this._xGrid = paper.Path.Line([0, 150], [300, 150]));
+      this._xGrid.strokeColor = "black";
+      this._yGrid || (this._yGrid = paper.Path.Line([150, 0], [150, 300]));
+      this._yGrid.strokeColor = "black";
+      return paper.view.draw();
+    };
+
+    AvatarCanvasView.prototype.KEY_HANDLERS = {
+      up: function() {
+        return this.moveBy(0, -this.KEY_SENSITIVITY);
+      },
+      down: function() {
+        return this.moveBy(0, this.KEY_SENSITIVITY);
+      },
+      left: function() {
+        return this.moveBy(-this.KEY_SENSITIVITY, 0);
+      },
+      right: function() {
+        return this.moveBy(this.KEY_SENSITIVITY, 0);
+      },
+      backspace: function() {
+        if (document.activeElement.tagName.toUpperCase() === "BODY") {
+          this.remove();
+          return false;
+        }
+      },
+      "-": function() {
+        return this.zoomOut();
+      },
+      "_": function() {
+        return this.zoomOut();
+      },
+      "+": function() {
+        return this.zoomIn();
+      },
+      "=": function() {
+        return this.zoomIn();
+      },
+      "<": function() {
+        return this.rotateLeft();
+      },
+      ">": function() {
+        return this.rotateRight();
+      }
+    };
+
+    return AvatarCanvasView;
+
+  })(Batman.View);
+
   App.AvatarsFormView = (function(_super) {
     __extends(AvatarsFormView, _super);
-
-    AvatarsFormView.prototype.KEY_SENSITIVITY = 3;
 
     function AvatarsFormView() {
       AvatarsFormView.__super__.constructor.apply(this, arguments);
@@ -300,164 +522,13 @@
       return App.Component.get('loaded.indexedByUnique.id').get(this.get('selectedComponentId'));
     });
 
-    AvatarsFormView.prototype.viewWillDisappear = function() {
-      console.log("restoring Batman.redirect");
-      return Batman.redirect = this._oldRedirect;
-    };
-
     AvatarsFormView.prototype.viewDidAppear = function() {
-      var tool;
-      if (this.canvas != null) {
-        return;
-      }
-      this.scope = new paper.PaperScope;
-      this.canvas = $(this.node).find('canvas')[0];
-      this.scope.setup(this.canvas);
-      tool = new Tool;
-      $(window).on("beforeunload", this._beforeUnload = (function(_this) {
-        return function() {
-          if (_this.get('wasChanged')) {
-            return "Your changes won't be saved!";
-          } else {
-            return void 0;
-          }
-        };
-      })(this));
-      this._oldRedirect = Batman.redirect;
-      Batman.redirect = (function(_this) {
-        return function() {
-          var msg;
-          if ((msg = _this._beforeUnload()) && !confirm("" + msg + " \nAre you sure you want to leave this page?")) {
-            return console.log("Navigation prevented", msg);
-          } else {
-            return _this._oldRedirect.apply(Batman, arguments);
-          }
-        };
-      })(this);
-      tool.onMouseDown = (function(_this) {
-        return function(e) {
-          var currentItem, item, _i, _len, _ref, _results;
-          $('input, select').blur();
-          if (e.item == null) {
-            return;
-          }
-          currentItem = _this.get('currentItem');
-          if (_this._testItem(e.item, e.point)) {
-            return _this.set('currentItem', e.item);
-          } else if ((currentItem != null) && _this._testItem(currentItem, e.point)) {
-
-          } else {
-            _ref = _this.scope.project.activeLayer.children;
-            _results = [];
-            for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-              item = _ref[_i];
-              if (_this._testItem(item, e.point)) {
-                _this.set('currentItem', item);
-                break;
-              } else {
-                _results.push(void 0);
-              }
-            }
-            return _results;
-          }
-        };
-      })(this);
-      tool.onMouseDrag = (function(_this) {
-        return function(e) {
-          if (e.delta != null) {
-            _this.moveBy(e.delta.x, e.delta.y);
-            return _this._updateAvatar();
-          }
-        };
-      })(this);
-      tool.onKeyDown = (function(_this) {
-        return function(e) {
-          var handler;
-          if (handler = _this.KEY_HANDLERS[e.key]) {
-            return handler.call(_this);
-          } else {
-            return console.log(e.key);
-          }
-        };
-      })(this);
+      AvatarsFormView.__super__.viewDidAppear.apply(this, arguments);
       return this.loadAvatar();
     };
 
-    AvatarsFormView.prototype._testItem = function(item, point) {
-      var targetItemTest;
-      targetItemTest = item.hitTest(point, {
-        fill: true
-      });
-      return (targetItemTest != null) && targetItemTest.color.alpha !== 0;
-    };
-
-    AvatarsFormView.prototype.moveBy = function(x, y) {
-      var lastPostion, newPosition, _ref, _ref1;
-      if (!(lastPostion = (_ref = this.get('currentItem')) != null ? _ref.position : void 0)) {
-        return;
-      }
-      newPosition = [lastPostion.x + x, lastPostion.y + y];
-      if ((_ref1 = this.get('currentItem')) != null) {
-        _ref1.position = newPosition;
-      }
-      return this._updateAvatar();
-    };
-
-    AvatarsFormView.prototype.zoomOut = function() {
-      var _ref;
-      if ((_ref = this.get('currentItem')) != null) {
-        _ref.scale(0.9);
-      }
-      return this._updateAvatar();
-    };
-
-    AvatarsFormView.prototype.zoomIn = function() {
-      var _ref;
-      if ((_ref = this.get('currentItem')) != null) {
-        _ref.scale(1.1);
-      }
-      return this._updateAvatar();
-    };
-
-    AvatarsFormView.prototype.rotateLeft = function() {
-      var _ref;
-      if ((_ref = this.get('currentItem')) != null) {
-        _ref.rotate(-5);
-      }
-      return this._updateAvatar();
-    };
-
-    AvatarsFormView.prototype.rotateRight = function() {
-      var _ref;
-      if ((_ref = this.get('currentItem')) != null) {
-        _ref.rotate(5);
-      }
-      return this._updateAvatar();
-    };
-
-    AvatarsFormView.prototype.sendToBack = function() {
-      var item;
-      if (!(item = this.get('currentItem'))) {
-        return;
-      }
-      item.sendToBack();
-      item.feature.set('index', item.index);
-      return this._updateAvatar();
-    };
-
-    AvatarsFormView.prototype.bringToFront = function() {
-      var item;
-      if (!(item = this.get('currentItem'))) {
-        return;
-      }
-      item.bringToFront();
-      item.feature.set('index', item.index);
-      return this._updateAvatar();
-    };
-
-    AvatarsFormView.prototype._updateAvatar = function() {
-      paper.view.draw();
-      this.set('wasChanged', true);
+    AvatarsFormView.prototype.canvasWasChanged = function() {
+      AvatarsFormView.__super__.canvasWasChanged.apply(this, arguments);
       return this.controller.get('avatar').set('imageDataURI', this.canvas.toDataURL());
     };
 
@@ -466,7 +537,8 @@
       imageDataURI = component.get('imageDataURI');
       name = component.get('name');
       _ref = paper.view.center, x = _ref.x, y = _ref.y;
-      raster = new paper.Raster(imageDataURI, [x, y]);
+      raster = new paper.Raster(imageDataURI, [component.get('defaultX') || x, component.get('defaultY') || y]);
+      raster.scale(component.get('defaultScale') || 1);
       index = raster.index;
       feature = this.controller.get('avatar.features').build({
         name: name,
@@ -480,7 +552,19 @@
       raster.feature = feature;
       this.set('currentItem', raster);
       this.unset('selectedComponentId');
-      return this._updateAvatar();
+      return this.canvasWasChanged();
+    };
+
+    AvatarsFormView.prototype.moveBy = function(x, y) {
+      var lastPostion, newPosition, _ref, _ref1;
+      if (!(lastPostion = (_ref = this.get('currentItem')) != null ? _ref.position : void 0)) {
+        return;
+      }
+      newPosition = [lastPostion.x, lastPostion.y + y];
+      if ((_ref1 = this.get('currentItem')) != null) {
+        _ref1.position = newPosition;
+      }
+      return this.canvasWasChanged();
     };
 
     AvatarsFormView.prototype.activateFeature = function(feature) {
@@ -495,17 +579,18 @@
       this.controller.get('avatar.features').remove(raster.feature);
       raster.remove();
       this.unset('currentItem');
-      return this._updateAvatar();
+      return this.canvasWasChanged();
     };
 
     AvatarsFormView.prototype.removeFeature = function(feature) {
       var raster;
+      raster = feature.get('raster');
       this.controller.get('avatar.features').remove(feature);
-      if (raster = this.get('currentItem')) {
+      if (raster === this.get('currentItem')) {
         this.unset('currentItem');
       }
       raster.remove();
-      return this._updateAvatar();
+      return this.canvasWasChanged();
     };
 
     AvatarsFormView.prototype.downloadAvatar = function() {
@@ -541,55 +626,58 @@
       });
     };
 
-    AvatarsFormView.prototype._showGrid = function() {
-      this._xGrid || (this._xGrid = paper.Path.Line([0, 150], [300, 150]));
-      this._xGrid.strokeColor = "black";
-      this._yGrid || (this._yGrid = paper.Path.Line([150, 0], [150, 300]));
-      this._yGrid.strokeColor = "black";
-      return paper.view.draw();
-    };
-
-    AvatarsFormView.prototype.KEY_HANDLERS = {
-      up: function() {
-        return this.moveBy(0, -this.KEY_SENSITIVITY);
-      },
-      down: function() {
-        return this.moveBy(0, this.KEY_SENSITIVITY);
-      },
-      left: function() {
-        return this.moveBy(-this.KEY_SENSITIVITY, 0);
-      },
-      right: function() {
-        return this.moveBy(this.KEY_SENSITIVITY, 0);
-      },
-      backspace: function() {
-        if (document.activeElement.tagName.toUpperCase() === "BODY") {
-          this.remove();
-          return false;
-        }
-      },
-      "-": function() {
-        return this.zoomOut();
-      },
-      "_": function() {
-        return this.zoomOut();
-      },
-      "+": function() {
-        return this.zoomIn();
-      },
-      "-": function() {
-        return this.zoomIn();
-      },
-      "<": function() {
-        return this.rotateLeft();
-      },
-      ">": function() {
-        return this.rotateRight();
-      }
-    };
-
     return AvatarsFormView;
 
-  })(Batman.View);
+  })(App.AvatarCanvasView);
+
+  App.ComponentsEditView = (function(_super) {
+    __extends(ComponentsEditView, _super);
+
+    function ComponentsEditView() {
+      return ComponentsEditView.__super__.constructor.apply(this, arguments);
+    }
+
+    ComponentsEditView.prototype.viewDidAppear = function() {
+      var background;
+      ComponentsEditView.__super__.viewDidAppear.apply(this, arguments);
+      background = new paper.Raster("http://localhost:9000/images/avatar_background.png", paper.view.center);
+      background.dontSelect = true;
+      this.addFeature(this.controller.get('component'));
+      return this.set('wasChanged', false);
+    };
+
+    ComponentsEditView.prototype.addFeature = function(component) {
+      var imageDataURI, raster, x, y, _ref;
+      imageDataURI = component.get('imageDataURI');
+      _ref = paper.view.center, x = _ref.x, y = _ref.y;
+      raster = new paper.Raster(imageDataURI, [component.get('defaultX') || x, component.get('defaultY') || y]);
+      raster.scale(component.get('defaultScale') || 1);
+      return this.set('currentItem', raster);
+    };
+
+    ComponentsEditView.prototype.canvasWasChanged = function() {
+      var newAttrs;
+      ComponentsEditView.__super__.canvasWasChanged.apply(this, arguments);
+      newAttrs = {
+        defaultX: this.get("currentItem").position.x,
+        defaultY: this.get("currentItem").position.y,
+        defaultScale: this.get('currentItem').scaling.x
+      };
+      return this.controller.get('component').updateAttributes(newAttrs);
+    };
+
+    ComponentsEditView.prototype.saveComponent = function() {
+      this.set('saveMessage', "Saving...");
+      return this.controller.get('component').save((function(_this) {
+        return function() {
+          _this.unset('wasChanged');
+          return _this.unset('saveMessage');
+        };
+      })(this));
+    };
+
+    return ComponentsEditView;
+
+  })(App.AvatarCanvasView);
 
 }).call(this);

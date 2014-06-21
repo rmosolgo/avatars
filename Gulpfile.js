@@ -3,7 +3,12 @@ var PRELOAD_TEMPLATES = true
 
 gulp.task('default', ['harp'], function(){
   var tasks = ["build"]
-  gulp.watch(['./**/*.coffee', './**/*.html', './**/*.jade', './**/*.scss'], tasks)
+  gulp.watch([
+    './**/*.coffee',
+    './**/*.html',
+    './**/*.jade',
+    './**/*.scss'
+    ], tasks)
 });
 
 // BUILD BATMANJS APP
@@ -25,6 +30,9 @@ gulp.task("build_app", function(){
   var stream = gulp.src(appSources)
     .pipe(concat('application.coffee'))
     .pipe(coffee())
+    .on("error", function(e){
+      console.log(e);
+      console.log('CoffeeScript error - restart gulp!')})
     .pipe(concat('app.js'))
     .pipe(gulp.dest("./build/"))
   return stream
