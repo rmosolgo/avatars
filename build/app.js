@@ -184,6 +184,43 @@
       })(this));
     };
 
+    ApplicationController.prototype.dialog = function(renderOptions) {
+      var opts, view;
+      if (renderOptions == null) {
+        renderOptions = {};
+      }
+      opts = Batman.extend({
+        into: "modal"
+      }, renderOptions);
+      return view = this.render(opts).on('ready', (function(_this) {
+        return function() {
+          return _this.openDialog();
+        };
+      })(this));
+    };
+
+    ApplicationController.prototype.openDialog = function() {
+      return $('.modal').modal('show');
+    };
+
+    ApplicationController.prototype.closeDialog = function() {
+      var modalYield, _ref;
+      $('.modal').modal('hide');
+      modalYield = Batman.DOM.Yield.get('yields.modal');
+      if ((_ref = modalYield.get('contentView')) != null) {
+        _ref.die();
+      }
+      return modalYield.set('contentView', void 0);
+    };
+
+    ApplicationController.beforeAction(ApplicationController.prototype.closeDialog);
+
+    ApplicationController.prototype.keyboardShortcuts = function() {
+      return this.dialog({
+        source: "keyboard_shortcuts"
+      });
+    };
+
     return ApplicationController;
 
   })(Batman.Controller);

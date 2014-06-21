@@ -17,14 +17,16 @@ form(data-formfor-c='component' data-event-submit='saveComponent')
       label Name
       input.form-control(type='text' data-bind='c.name' placeholder='name')
     .form-group.col-xs-6
+      a.btn.btn-info(data-event-click='executeAction | withArguments "keyboardShortcuts"') Keyboard Shortcuts
+      br
       label Default Position:
       .row
-        .col-xs-4
-          input(type="text" disabled="true" data-bind='component.defaultX')
-        .col-xs-4
-          input(type="text" disabled="true" data-bind='component.defaultY')
-        .col-xs-4
-          input(type="text" disabled="true" data-bind='component.defaultScale')
+        .col-xs-3
+          input.form-control(type="text" disabled="true" data-bind='component.defaultX')
+        .col-xs-3
+          input.form-control(type="text" disabled="true" data-bind='component.defaultY')
+        .col-xs-3
+          input.form-control(type="text" disabled="true" data-bind='component.defaultScale')
 
   .row
     .form-group.col-xs-6

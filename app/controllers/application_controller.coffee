@@ -13,3 +13,23 @@ class App.ApplicationController extends Batman.Controller
         throw err
       else
         callback?(err, record)
+
+  dialog: (renderOptions={}) ->
+    opts = Batman.extend({into: "modal"}, renderOptions)
+    view = @render(opts).on 'ready', =>
+      @openDialog()
+
+  openDialog: ->
+    $('.modal').modal('show')
+
+  closeDialog: ->
+    $('.modal').modal('hide')
+    modalYield = Batman.DOM.Yield.get('yields.modal')
+    modalYield.get('contentView')?.die()
+    modalYield.set('contentView', undefined)
+
+  @beforeAction @::closeDialog
+
+
+  keyboardShortcuts: ->
+    @dialog(source: "keyboard_shortcuts")
