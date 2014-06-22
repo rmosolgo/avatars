@@ -1,6 +1,11 @@
 #funnzzy-body {
   background-color: #fff8ea;
   font-family: 'Montserrat', sans-serif; }
+  #funnzzy-body .btn-primary {
+    border: 2px solid #ff8256;
+    color: #ff8256; }
+  #funnzzy-body .btn {
+    background-color: transparent; }
   #funnzzy-body input {
     background-color: transparent;
     border: 2px solid #dcccab;
@@ -38,13 +43,15 @@
       margin-bottom: 10px; }
       #funnzzy-body .avatar-container .avatar-controls .col-sm-4 {
         width: 50%; }
-  #funnzzy-body .item-controls .col-sm-3 {
-    text-align: center; }
-    #funnzzy-body .item-controls .col-sm-3 a:hover {
-      text-decoration: none; }
-  #funnzzy-body .item-controls a {
-    color: #dcccab;
-    font-size: 30px; }
+  #funnzzy-body .item-controls {
+    margin-top: 67px; }
+    #funnzzy-body .item-controls .col-sm-3 {
+      text-align: center; }
+      #funnzzy-body .item-controls .col-sm-3 a:hover {
+        text-decoration: none; }
+    #funnzzy-body .item-controls a {
+      color: #dcccab;
+      font-size: 30px; }
   #funnzzy-body .item-btn-controls .btn.btn-primary {
     width: 100%;
     border: 2px solid #dcccab;
@@ -55,6 +62,16 @@
     border-bottom: 2px solid #dcccab;
     margin: 0px;
     padding: 12px; }
+  #funnzzy-body .nav-btn-container {
+    float: right; }
+    #funnzzy-body .nav-btn-container .btn {
+      background-color: transparent; }
+    #funnzzy-body .nav-btn-container .btn-success {
+      border: 2px solid #a4cd69;
+      color: #a4cd69; }
+    #funnzzy-body .nav-btn-container .btn-danger {
+      border: 2px solid #a49e93;
+      color: #a49e93; }
 
 @font-face {
   font-family: 'funnzzy-icon';

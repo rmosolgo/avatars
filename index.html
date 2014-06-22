@@ -45,8 +45,15 @@
 
     <div class="row top-bar">
       <a class="btn btn-primary" data-route='routes.avatars.new'>New Avatar</a>
-      <a class="btn btn-success" data-addclass-btn-warning='wasChanged' data-event-click='saveAvatar' data-bind='saveMessage | default "Save Avatar"'>Save</a>
-      <a class="btn btn-danger" data-event-click='remove'>Remove</a>
+      <div class="nav-btn-container">
+        <a class="btn btn-success" data-addclass-btn-warning='wasChanged' data-event-click='saveAvatar' data-bind='saveMessage | default "Save Avatar"'>
+          <span class="icon-check"></span>
+          Save</a>
+        <a class="btn btn-danger" data-event-click='remove'>
+          <span class="icon-delete"></span>
+          Remove
+        </a>
+      </div>
     </div>
 
     <section class='container'>

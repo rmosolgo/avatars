@@ -2,6 +2,15 @@
 {
   background-color: #fff8ea;
   font-family: 'Montserrat', sans-serif;
+  .btn-primary
+    {
+      border: 2px solid #ff8256;
+      color: #ff8256;
+    }
+  .btn
+    {
+      background-color: transparent;
+    }
   input
   {
     background-color: transparent;
@@ -64,6 +73,7 @@
   }
   .item-controls
   {
+    margin-top: 67px;
     .col-sm-3
     {
       text-align: center;
@@ -94,6 +104,24 @@
     border-bottom: 2px solid #dcccab;
     margin: 0px;
     padding: 12px;
+  }
+  .nav-btn-container
+  {
+    float: right;
+    .btn
+    {
+      background-color: transparent;
+    }
+    .btn-success
+      {
+        border: 2px solid #a4cd69;
+        color: #a4cd69;
+      }
+    .btn-danger
+      {
+        border: 2px solid #a49e93;
+        color: #a49e93;
+      }
   }
 }
 

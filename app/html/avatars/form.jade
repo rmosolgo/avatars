@@ -53,6 +53,8 @@ div.avatar-container(data-view='AvatarsFormView')
           a.btn.btn-primary(data-event-click='sendToBack') Send to Back
   .row
     .col-sm-4
-      a.btn.btn-primary(data-event-click='downloadAvatar') Download Avatar
+      a.btn.btn-primary(data-event-click='downloadAvatar')
+        span.icon-download-arrow
+        | Download Avatar
     .col-sm-4
       a.btn.btn-info(data-event-click='executeAction | withArguments "keyboardShortcuts"') Keyboard Shortcuts
