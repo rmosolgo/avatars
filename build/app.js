@@ -539,6 +539,56 @@
 
   })(Batman.View);
 
+  App.ComponentsEditView = (function(_super) {
+    __extends(ComponentsEditView, _super);
+
+    function ComponentsEditView() {
+      return ComponentsEditView.__super__.constructor.apply(this, arguments);
+    }
+
+    ComponentsEditView.prototype.viewDidAppear = function() {
+      var background;
+      ComponentsEditView.__super__.viewDidAppear.apply(this, arguments);
+      background = new paper.Raster("http://localhost:9000/images/avatar_background.png", paper.view.center);
+      background.dontSelect = true;
+      this.addFeature(this.controller.get('component'));
+      return this.set('wasChanged', false);
+    };
+
+    ComponentsEditView.prototype.addFeature = function(component) {
+      var imageDataURI, raster, x, y, _ref;
+      imageDataURI = component.get('imageDataURI');
+      _ref = paper.view.center, x = _ref.x, y = _ref.y;
+      raster = new paper.Raster(imageDataURI, [component.get('defaultX') || x, component.get('defaultY') || y]);
+      raster.scale(component.get('defaultScale') || 1);
+      return this.set('currentItem', raster);
+    };
+
+    ComponentsEditView.prototype.canvasWasChanged = function() {
+      var newAttrs;
+      ComponentsEditView.__super__.canvasWasChanged.apply(this, arguments);
+      newAttrs = {
+        defaultX: this.get("currentItem").position.x,
+        defaultY: this.get("currentItem").position.y,
+        defaultScale: this.get('currentItem').scaling.x
+      };
+      return this.controller.get('component').updateAttributes(newAttrs);
+    };
+
+    ComponentsEditView.prototype.saveComponent = function() {
+      this.set('saveMessage', "Saving...");
+      return this.controller.get('component').save((function(_this) {
+        return function() {
+          _this.unset('wasChanged');
+          return _this.unset('saveMessage');
+        };
+      })(this));
+    };
+
+    return ComponentsEditView;
+
+  })(App.AvatarCanvasView);
+
   App.AvatarsFormView = (function(_super) {
     __extends(AvatarsFormView, _super);
 
@@ -664,56 +714,6 @@
     };
 
     return AvatarsFormView;
-
-  })(App.AvatarCanvasView);
-
-  App.ComponentsEditView = (function(_super) {
-    __extends(ComponentsEditView, _super);
-
-    function ComponentsEditView() {
-      return ComponentsEditView.__super__.constructor.apply(this, arguments);
-    }
-
-    ComponentsEditView.prototype.viewDidAppear = function() {
-      var background;
-      ComponentsEditView.__super__.viewDidAppear.apply(this, arguments);
-      background = new paper.Raster("http://localhost:9000/images/avatar_background.png", paper.view.center);
-      background.dontSelect = true;
-      this.addFeature(this.controller.get('component'));
-      return this.set('wasChanged', false);
-    };
-
-    ComponentsEditView.prototype.addFeature = function(component) {
-      var imageDataURI, raster, x, y, _ref;
-      imageDataURI = component.get('imageDataURI');
-      _ref = paper.view.center, x = _ref.x, y = _ref.y;
-      raster = new paper.Raster(imageDataURI, [component.get('defaultX') || x, component.get('defaultY') || y]);
-      raster.scale(component.get('defaultScale') || 1);
-      return this.set('currentItem', raster);
-    };
-
-    ComponentsEditView.prototype.canvasWasChanged = function() {
-      var newAttrs;
-      ComponentsEditView.__super__.canvasWasChanged.apply(this, arguments);
-      newAttrs = {
-        defaultX: this.get("currentItem").position.x,
-        defaultY: this.get("currentItem").position.y,
-        defaultScale: this.get('currentItem').scaling.x
-      };
-      return this.controller.get('component').updateAttributes(newAttrs);
-    };
-
-    ComponentsEditView.prototype.saveComponent = function() {
-      this.set('saveMessage', "Saving...");
-      return this.controller.get('component').save((function(_this) {
-        return function() {
-          _this.unset('wasChanged');
-          return _this.unset('saveMessage');
-        };
-      })(this));
-    };
-
-    return ComponentsEditView;
 
   })(App.AvatarCanvasView);
 

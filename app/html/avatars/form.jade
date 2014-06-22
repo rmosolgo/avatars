@@ -1,10 +1,10 @@
-div(data-view='AvatarsFormView')
+div.avatar-container(data-view='AvatarsFormView')
   .row
     .col-sm-12
       ul.list-unstyled.alert.alert-warning(data-showif='avatar.errors.length')
         li(data-foreach-e='avatar.errors' data-bind='e.fullMessage')
 
-  .row
+  .row.avatar-controls
     .col-sm-4
       .form-group
         input.form-control(type='text' placeholder="Who is this?" data-bind='avatar.name')
@@ -13,7 +13,7 @@ div(data-view='AvatarsFormView')
         select.form-control(data-bind='selectedComponentId')
           option Select a Component
           option(data-foreach-component='Component.all' data-bind='component.name' data-bind-value='component.id')
-  .row
+  .row.avatar-row
     .col-sm-6
       .well.well-small
         canvas#new-avatar(style='height:300px; width:300px; border: 1px solid black; cursor:pointer;')
@@ -32,27 +32,27 @@ div(data-view='AvatarsFormView')
             li(data-foreach-feature='avatar.features.sortedByDescending.index')
               a(data-bind='feature.name' data-event-click='activateFeature | withArguments feature')
               a.text-danger.pull-right(data-event-click='removeFeature | withArguments feature') &times;
-      .row
+      .row.item-controls
         .col-sm-3
-          a.btn.btn-primary(data-event-click='zoomIn') Zoom In
+          a(data-event-click='zoomIn')
+            span.icon-zoom-in
         .col-sm-3
-          a.btn.btn-primary(data-event-click='zoomOut') Zoom Out
+          a(data-event-click='zoomOut')
+            span.icon-zoom-out
         .col-sm-3
-          a.btn.btn-primary(data-event-click='rotateLeft') Rotate Left
+          a(data-event-click='rotateLeft')
+            span.icon-rotate-left
         .col-sm-3
-          a.btn.btn-primary(data-event-click='rotateRight') Rotate Right
+          a(data-event-click='rotateRight')
+            span.icon-rotate-right
       br
-      .row
-        .col-sm-3
+      .row.item-btn-controls
+        .col-sm-6
           a.btn.btn-primary(data-event-click='bringToFront') Bring to Front
-        .col-sm-3
+        .col-sm-6
           a.btn.btn-primary(data-event-click='sendToBack') Send to Back
-        .col-sm-3
-          a.btn.btn-danger(data-event-click='remove') Remove
   .row
     .col-sm-4
       a.btn.btn-primary(data-event-click='downloadAvatar') Download Avatar
-    .col-sm-4
-      a.btn.btn-success(data-addclass-btn-warning='wasChanged' data-event-click='saveAvatar' data-bind='saveMessage | default "Save Avatar"')
     .col-sm-4
       a.btn.btn-info(data-event-click='executeAction | withArguments "keyboardShortcuts"') Keyboard Shortcuts

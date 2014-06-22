@@ -1,3 +1,152 @@
-body {
-  background-color: white;
+#funnzzy-body
+{
+  background-color: #fff8ea;
+  font-family: 'Montserrat', sans-serif;
+  input
+  {
+    background-color: transparent;
+    border: 2px solid #dcccab;
+    border-radius: 4px;
+    box-shadow: none;
+    color: #dcccab;
+  }
+  select
+  {
+    background-color: transparent;
+    border: 2px solid #ff8256;
+    border-radius: 4px;
+    box-shadow: none;
+    color: #ff8256;
+  }
+  header
+  {
+  	width: 100%;
+    padding: 0px;
+    nav
+      { 
+        background-color: #ff8256;
+        border-radius: 0px;
+        border: none;
+        margin-bottom: 0px;
+        a
+          { 
+            color: #ffefce;
+          }
+      }
+  }
+  .avatar-row
+  {
+    .well
+    {
+      border: 2px solid #ff8256;
+      border-radius: 6px;
+      background-color: transparent;
+      box-shadow: none;
+      #new-avatar
+      {
+        border: 0px!important;
+        background-color: #f2eada;
+      }
+    }
+  }
+  .avatar-container
+  {
+    max-width: 714px;
+    margin: 30px auto 0px auto;
+    .avatar-controls
+    {
+      margin-bottom: 10px;
+      .col-sm-4
+      {
+        width: 50%;
+      }
+    }
+  }
+  .item-controls
+  {
+    .col-sm-3
+    {
+      text-align: center;
+      a:hover
+      {
+        text-decoration: none;
+      }
+    }
+    a
+    {
+      color: #dcccab;
+      font-size: 30px;
+    }  
+  }
+  .item-btn-controls
+  {
+    .btn.btn-primary
+    {
+      width: 100%;
+      border: 2px solid #dcccab;
+      border-radius: 3px;
+      color: #dcccab;
+      background-color: transparent;
+    }
+  }
+  .top-bar
+  {
+    border-bottom: 2px solid #dcccab;
+    margin: 0px;
+    padding: 12px;
+  }
+}
+
+
+
+
+// ICONS
+@font-face {
+  font-family: 'funnzzy-icon';
+  src:url('/fonts/funnzzy-icon.eot?yv764o');
+  src:url('/fonts/funnzzy-icon.eot?#iefixyv764o') format('embedded-opentype'),
+    url('/fonts/funnzzy-icon.woff?yv764o') format('woff'),
+    url('/fonts/funnzzy-icon.ttf?yv764o') format('truetype'),
+    url('/fonts/funnzzy-icon.svg?yv764o#funnzzy-icon') format('svg');
+  font-weight: normal;
+  font-style: normal;
+}
+
+[class^="icon-"], [class*=" icon-"] {
+  font-family: 'funnzzy-icon';
+  speak: none;
+  font-style: normal;
+  font-weight: normal;
+  font-variant: normal;
+  text-transform: none;
+  line-height: 1;
+
+  /* Better Font Rendering =========== */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.icon-check:before {
+  content: "\e600";
+}
+.icon-delete:before {
+  content: "\e601";
+}
+.icon-download-arrow:before {
+  content: "\e602";
+}
+.icon-gallery-arrow:before {
+  content: "\e603";
+}
+.icon-rotate-left:before {
+  content: "\e604";
+}
+.icon-rotate-right:before {
+  content: "\e605";
+}
+.icon-zoom-in:before {
+  content: "\e606";
+}
+.icon-zoom-out:before {
+  content: "\e607";
 }
