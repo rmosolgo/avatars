@@ -1,6 +1,18 @@
 #funnzzy-body {
   background-color: #fff8ea;
   font-family: 'Montserrat', sans-serif; }
+  #funnzzy-body .navbar-header {
+    position: absolute;
+    margin: 0 auto;
+    right: 0px;
+    left: 0px;
+    width: 220px;
+    text-align: center; }
+  #funnzzy-body .navbar-brand {
+    font-family: 'Pacifico', cursive;
+    font-size: 33px;
+    width: 100%;
+    margin: 0px; }
   #funnzzy-body .btn-primary {
     border: 2px solid #ff8256;
     color: #ff8256; }
@@ -25,7 +37,8 @@
       background-color: #ff8256;
       border-radius: 0px;
       border: none;
-      margin-bottom: 0px; }
+      margin-bottom: 0px;
+      padding: 8px; }
       #funnzzy-body header nav a {
         color: #ffefce; }
   #funnzzy-body .avatar-row .feature-col {
