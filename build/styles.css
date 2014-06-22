@@ -28,6 +28,10 @@
       margin-bottom: 0px; }
       #funnzzy-body header nav a {
         color: #ffefce; }
+  #funnzzy-body .avatar-row .feature-col {
+    text-align: center;
+    color: #ff8256;
+    position: relative; }
   #funnzzy-body .avatar-row .well {
     border: 2px solid #ff8256;
     border-radius: 6px;
@@ -39,25 +43,30 @@
   #funnzzy-body .avatar-container {
     max-width: 714px;
     margin: 30px auto 0px auto; }
+    #funnzzy-body .avatar-container .list-features li {
+      display: inline-block; }
     #funnzzy-body .avatar-container .avatar-controls {
       margin-bottom: 10px; }
       #funnzzy-body .avatar-container .avatar-controls .col-sm-4 {
         width: 50%; }
-  #funnzzy-body .item-controls {
-    margin-top: 67px; }
-    #funnzzy-body .item-controls .col-sm-3 {
-      text-align: center; }
-      #funnzzy-body .item-controls .col-sm-3 a:hover {
-        text-decoration: none; }
-    #funnzzy-body .item-controls a {
-      color: #dcccab;
-      font-size: 30px; }
-  #funnzzy-body .item-btn-controls .btn.btn-primary {
+  #funnzzy-body .item-controls .col-sm-3 {
+    text-align: center; }
+    #funnzzy-body .item-controls .col-sm-3 a:hover {
+      text-decoration: none; }
+  #funnzzy-body .item-controls a {
+    color: #dcccab;
+    font-size: 30px; }
+  #funnzzy-body .item-btn-controls .btn {
     width: 100%;
     border: 2px solid #dcccab;
     border-radius: 3px;
     color: #dcccab;
-    background-color: transparent; }
+    background-color: transparent;
+    font-size: 14px; }
+  #funnzzy-body .item-btn-controls .btn-info {
+    color: #5cacc9;
+    border: 2px solid #5cacc9;
+    margin-top: 20px; }
   #funnzzy-body .top-bar {
     border-bottom: 2px solid #dcccab;
     margin: 0px;
@@ -68,7 +77,8 @@
       background-color: transparent; }
     #funnzzy-body .nav-btn-container .btn-success {
       border: 2px solid #a4cd69;
-      color: #a4cd69; }
+      color: #a4cd69;
+      margin-right: 10px; }
     #funnzzy-body .nav-btn-container .btn-danger {
       border: 2px solid #a49e93;
       color: #a49e93; }

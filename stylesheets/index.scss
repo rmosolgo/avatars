@@ -45,6 +45,12 @@
   }
   .avatar-row
   {
+    .feature-col
+    {
+      text-align: center;
+      color: #ff8256;
+      position: relative;
+    }
     .well
     {
       border: 2px solid #ff8256;
@@ -62,6 +68,13 @@
   {
     max-width: 714px;
     margin: 30px auto 0px auto;
+    .list-features
+    {
+      li
+      {
+        display: inline-block;
+      }
+    }
     .avatar-controls
     {
       margin-bottom: 10px;
@@ -73,7 +86,6 @@
   }
   .item-controls
   {
-    margin-top: 67px;
     .col-sm-3
     {
       text-align: center;
@@ -90,13 +102,20 @@
   }
   .item-btn-controls
   {
-    .btn.btn-primary
+    .btn
     {
       width: 100%;
       border: 2px solid #dcccab;
       border-radius: 3px;
       color: #dcccab;
       background-color: transparent;
+      font-size: 14px;
+    }
+    .btn-info
+    {
+      color: #5cacc9;
+      border: 2px solid #5cacc9;
+      margin-top: 20px;
     }
   }
   .top-bar
@@ -116,6 +135,7 @@
       {
         border: 2px solid #a4cd69;
         color: #a4cd69;
+        margin-right: 10px;
       }
     .btn-danger
       {
