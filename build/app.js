@@ -805,7 +805,7 @@
     ComponentsEditView.prototype.viewDidAppear = function() {
       var background;
       ComponentsEditView.__super__.viewDidAppear.apply(this, arguments);
-      background = new paper.Raster("http://localhost:9000/images/avatar_background.png", paper.view.center);
+      background = new paper.Raster("" + window.location.origin + "/images/avatar_background.png", paper.view.center);
       background.dontSelect = true;
       this.addFeature(this.controller.get('component'));
       return this.set('wasChanged', false);
