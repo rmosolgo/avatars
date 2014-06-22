@@ -13,7 +13,7 @@ div.avatar-container(data-view='AvatarsFormView')
         select.form-control(data-bind='selectedComponentId')
           option Select a Component
           option(data-foreach-component='Component.all' data-bind='component.name' data-bind-value='component.id')
-  .row
+  .row.features-row
     h4 Your Features:
     ul.list-unstyled.list-features
       li(data-foreach-feature='avatar.features.sortedByDescending.index')
@@ -27,7 +27,7 @@ div.avatar-container(data-view='AvatarsFormView')
       a.btn.btn-primary(data-event-click='downloadAvatar')
         span.icon-download-arrow
         | Download Avatar
-        
+
     .col-sm-6.feature-col
       .row
         h3

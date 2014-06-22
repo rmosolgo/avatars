@@ -32,6 +32,8 @@
     text-align: center;
     color: #ff8256;
     position: relative; }
+    #funnzzy-body .avatar-row .feature-col h3 {
+      margin-top: 0px; }
   #funnzzy-body .avatar-row .well {
     border: 2px solid #ff8256;
     border-radius: 6px;
@@ -43,19 +45,35 @@
   #funnzzy-body .avatar-container {
     max-width: 714px;
     margin: 30px auto 0px auto; }
+    #funnzzy-body .avatar-container .features-row {
+      margin: 0px 0px 20px 0px; }
     #funnzzy-body .avatar-container .list-features li {
-      display: inline-block; }
+      display: inline-block;
+      border: 2px solid #a49e93;
+      border-radius: 3px;
+      color: #a49e93;
+      padding: 3px 6px;
+      margin-right: 10px; }
+      #funnzzy-body .avatar-container .list-features li a {
+        color: #a49e93;
+        margin-right: 7px; }
+      #funnzzy-body .avatar-container .list-features li a:last-child {
+        margin-right: 0px; }
     #funnzzy-body .avatar-container .avatar-controls {
       margin-bottom: 10px; }
       #funnzzy-body .avatar-container .avatar-controls .col-sm-4 {
         width: 50%; }
-  #funnzzy-body .item-controls .col-sm-3 {
-    text-align: center; }
-    #funnzzy-body .item-controls .col-sm-3 a:hover {
-      text-decoration: none; }
-  #funnzzy-body .item-controls a {
-    color: #dcccab;
-    font-size: 30px; }
+  #funnzzy-body .item-controls {
+    margin: 0px;
+    position: absolute;
+    bottom: -99px; }
+    #funnzzy-body .item-controls .col-sm-3 {
+      text-align: center; }
+      #funnzzy-body .item-controls .col-sm-3 a:hover {
+        text-decoration: none; }
+    #funnzzy-body .item-controls a {
+      color: #dcccab;
+      font-size: 30px; }
   #funnzzy-body .item-btn-controls .btn {
     width: 100%;
     border: 2px solid #dcccab;
@@ -70,7 +88,7 @@
   #funnzzy-body .top-bar {
     border-bottom: 2px solid #dcccab;
     margin: 0px;
-    padding: 12px; }
+    padding: 20px; }
   #funnzzy-body .nav-btn-container {
     float: right; }
     #funnzzy-body .nav-btn-container .btn {
