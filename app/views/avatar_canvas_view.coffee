@@ -1,5 +1,5 @@
 class App.AvatarCanvasView extends Batman.View
-  KEY_SENSITIVITY: 3
+  KEY_SENSITIVITY: 1
 
   _checkForChanges: ->
     $(window).on "beforeunload", @_beforeUnload = =>
@@ -68,11 +68,11 @@ class App.AvatarCanvasView extends Batman.View
     @canvasWasChanged()
 
   zoomOut: ->
-    @get('currentItem')?.scale(0.9)
+    @get('currentItem')?.scale(0.95)
     @canvasWasChanged()
 
   zoomIn: ->
-    @get('currentItem')?.scale(1.1)
+    @get('currentItem')?.scale(1.05)
     @canvasWasChanged()
 
   rotateLeft: ->

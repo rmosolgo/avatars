@@ -1,7 +1,11 @@
 class App.AvatarsController extends App.ApplicationController
   routingKey: "avatars"
   new: ->
-    @set 'avatar', new App.Avatar
+    @render(false)
+    App.Component.load =>
+      @set 'avatar', new App.Avatar
+      @render()
+
 
   index: ->
     @set 'avatars', App.Avatar.get('all')
@@ -16,8 +20,9 @@ class App.AvatarsController extends App.ApplicationController
 
   edit: (params) ->
     @render(false)
-    App.Avatar.find params.id, (err, record) =>
-      @set('avatar', record)
-      @render()
+    App.Component.load =>
+      App.Avatar.find params.id, (err, record) =>
+        @set('avatar', record)
+        @render()
 
 

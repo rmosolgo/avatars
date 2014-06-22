@@ -1,7 +1,7 @@
 class App.Component extends Batman.Model
   @resourceName: 'component'
   @persist BatFire.Storage
-  @TYPES: ["Hair", "Eyes", "Nose", "Mouth", "Head", "Body"]
+  @TYPES: ["body", "head", "mouth", "nose", "eyes", "hair"]
   @encode 'imageDataURI', 'name', 'description', 'type',
     'defaultX', 'defaultY', 'defaultScale'
   @validate 'imageDataURI', presence: true
@@ -27,3 +27,13 @@ class App.Component extends Batman.Model
       dataURI = e.target.result
       @set 'imageDataURI', dataURI
     reader.readAsDataURL(file)
+
+
+  generateRaster: (paperObj) ->
+    imageDataURI = @get('imageDataURI')
+    {x, y} = paperObj.view.center
+    raster = new paperObj.Raster(
+      imageDataURI
+      [@get('defaultX') || x, @get('defaultY') || y]
+      )
+    raster.scale(@get('defaultScale') || 1)

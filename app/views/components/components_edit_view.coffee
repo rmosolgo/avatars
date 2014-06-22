@@ -27,6 +27,11 @@ class App.ComponentsEditView extends App.AvatarCanvasView
 
   saveComponent: ->
     @set('saveMessage', "Saving...")
-    @controller.get('component').save =>
-      @unset('wasChanged')
+    @controller.get('component').save (e, r) =>
       @unset('saveMessage')
+      if e?
+        if !(e instanceof Batman.ErrorsSet)
+          throw e
+      else
+        @unset('wasChanged')
+        @controller.redirect({action: "index"})

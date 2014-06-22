@@ -720,6 +720,7 @@
       if (array.length < 3) {
         return array.join(' and ');
       } else {
+        array = array.slice();
         last = array.pop();
         itemString = array.join(', ');
         itemString += ", and " + last;
@@ -1081,16 +1082,14 @@
 }).call(this);
 
 (function() {
-  var _ref,
-    __hasProp = {}.hasOwnProperty,
+  var __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
   Batman.PropertyEvent = (function(_super) {
     __extends(PropertyEvent, _super);
 
     function PropertyEvent() {
-      _ref = PropertyEvent.__super__.constructor.apply(this, arguments);
-      return _ref;
+      return PropertyEvent.__super__.constructor.apply(this, arguments);
     }
 
     PropertyEvent.prototype.eachHandler = function(iterator) {
@@ -1330,55 +1329,60 @@
       return result;
     },
     reduce: function(f, accumulator) {
-      var index, initialValuePassed,
-        _this = this;
+      var index, initialValuePassed;
       index = 0;
       initialValuePassed = accumulator != null;
-      this.forEach(function(element, value) {
-        if (!initialValuePassed) {
-          accumulator = element;
-          initialValuePassed = true;
-          return;
-        }
-        accumulator = f(accumulator, element, value, index, self);
-        return index++;
-      });
+      this.forEach((function(_this) {
+        return function(element, value) {
+          if (!initialValuePassed) {
+            accumulator = element;
+            initialValuePassed = true;
+            return;
+          }
+          accumulator = f(accumulator, element, value, index, self);
+          return index++;
+        };
+      })(this));
       return accumulator;
     },
     filter: function(f) {
-      var result, wrap,
-        _this = this;
+      var result, wrap;
       result = new this.constructor;
       if (result.add) {
-        wrap = function(result, element, value) {
-          if (f(element, value, _this)) {
-            result.add(element);
-          }
-          return result;
-        };
+        wrap = (function(_this) {
+          return function(result, element, value) {
+            if (f(element, value, _this)) {
+              result.add(element);
+            }
+            return result;
+          };
+        })(this);
       } else if (result.set) {
-        wrap = function(result, element, value) {
-          if (f(element, value, _this)) {
-            result.set(element, value);
-          }
-          return result;
-        };
+        wrap = (function(_this) {
+          return function(result, element, value) {
+            if (f(element, value, _this)) {
+              result.set(element, value);
+            }
+            return result;
+          };
+        })(this);
       } else {
         if (!result.push) {
           result = [];
         }
-        wrap = function(result, element, value) {
-          if (f(element, value, _this)) {
-            result.push(element);
-          }
-          return result;
-        };
+        wrap = (function(_this) {
+          return function(result, element, value) {
+            if (f(element, value, _this)) {
+              result.push(element);
+            }
+            return result;
+          };
+        })(this);
       }
       return this.reduce(wrap, result);
     },
     count: function(f, ctx) {
-      var count,
-        _this = this;
+      var count;
       if (ctx == null) {
         ctx = Batman.container;
       }
@@ -1386,11 +1390,13 @@
         return this.length;
       }
       count = 0;
-      this.forEach(function(element, value) {
-        if (f.call(ctx, element, value, _this)) {
-          return count++;
-        }
-      });
+      this.forEach((function(_this) {
+        return function(element, value) {
+          if (f.call(ctx, element, value, _this)) {
+            return count++;
+          }
+        };
+      })(this));
       return count;
     },
     inGroupsOf: function(groupSize) {
@@ -1679,12 +1685,13 @@
     };
 
     SimpleHash.prototype.replace = function(object) {
-      var _this = this;
-      this.forEach(function(key, value) {
-        if (!(key in object)) {
-          return _this.unset(key);
-        }
-      });
+      this.forEach((function(_this) {
+        return function(key, value) {
+          if (!(key in object)) {
+            return _this.unset(key);
+          }
+        };
+      })(this));
       return this.update(object);
     };
 
@@ -1963,11 +1970,12 @@
     };
 
     SimpleSet.prototype.mappedTo = function(key) {
-      var _this = this;
       this._mappings || (this._mappings = new Batman.SimpleHash);
-      return this._mappings.getOrSet(key, function() {
-        return new Batman.SetMapping(_this, key);
-      });
+      return this._mappings.getOrSet(key, (function(_this) {
+        return function() {
+          return new Batman.SetMapping(_this, key);
+        };
+      })(this));
     };
 
     SimpleSet.prototype.indexedBy = function(key) {
@@ -2291,13 +2299,16 @@
     };
 
     Property.prototype.sourceChangeHandler = function() {
-      var _this = this;
-      this._sourceChangeHandler || (this._sourceChangeHandler = function() {
-        return _this._handleSourceChange();
-      });
-      Batman.developer["do"](function() {
-        return _this._sourceChangeHandler.property = _this;
-      });
+      this._sourceChangeHandler || (this._sourceChangeHandler = (function(_this) {
+        return function() {
+          return _this._handleSourceChange();
+        };
+      })(this));
+      Batman.developer["do"]((function(_this) {
+        return function() {
+          return _this._sourceChangeHandler.property = _this;
+        };
+      })(this));
       return this._sourceChangeHandler;
     };
 
@@ -3126,8 +3137,7 @@
     return function(defaultAccessor) {
       return {
         get: function(key) {
-          var asyncDeliver, existingValue, newValue, _base, _base1,
-            _this = this;
+          var asyncDeliver, existingValue, newValue, _base, _base1;
           if ((existingValue = defaultAccessor.get.apply(this, arguments)) != null) {
             return existingValue;
           }
@@ -3137,20 +3147,22 @@
             _base.promises = {};
           }
           if ((_base1 = this._batman.promises)[key] == null) {
-            _base1[key] = (function() {
-              var deliver, returnValue;
-              deliver = function(err, result) {
-                if (asyncDeliver) {
-                  _this.set(key, result);
+            _base1[key] = (function(_this) {
+              return function() {
+                var deliver, returnValue;
+                deliver = function(err, result) {
+                  if (asyncDeliver) {
+                    _this.set(key, result);
+                  }
+                  return newValue = result;
+                };
+                returnValue = fetcher.call(_this, deliver, key);
+                if (newValue == null) {
+                  newValue = returnValue;
                 }
-                return newValue = result;
+                return true;
               };
-              returnValue = fetcher.call(_this, deliver, key);
-              if (newValue == null) {
-                newValue = returnValue;
-              }
-              return true;
-            })();
+            })(this)();
           }
           asyncDeliver = true;
           return newValue;
@@ -3287,8 +3299,7 @@
     });
 
     BatmanObject.delegate = function() {
-      var options, properties, _i,
-        _this = this;
+      var options, properties, _i;
       properties = 2 <= arguments.length ? __slice.call(arguments, 0, _i = arguments.length - 1) : (_i = 0, []), options = arguments[_i++];
       if (options == null) {
         options = {};
@@ -3296,27 +3307,28 @@
       if (!options.to) {
         Batman.developer.warn('delegate must include to option', this, properties);
       }
-      return properties.forEach(function(property) {
-        return _this.accessor(property, {
-          get: function() {
-            var _ref;
-            return (_ref = this.get(options.to)) != null ? _ref.get(property) : void 0;
-          },
-          set: function(key, value) {
-            var _ref;
-            return (_ref = this.get(options.to)) != null ? _ref.set(property, value) : void 0;
-          },
-          unset: function() {
-            var _ref;
-            return (_ref = this.get(options.to)) != null ? _ref.unset(property) : void 0;
-          }
-        });
-      });
+      return properties.forEach((function(_this) {
+        return function(property) {
+          return _this.accessor(property, {
+            get: function() {
+              var _ref;
+              return (_ref = this.get(options.to)) != null ? _ref.get(property) : void 0;
+            },
+            set: function(key, value) {
+              var _ref;
+              return (_ref = this.get(options.to)) != null ? _ref.set(property, value) : void 0;
+            },
+            unset: function() {
+              var _ref;
+              return (_ref = this.get(options.to)) != null ? _ref.unset(property) : void 0;
+            }
+          });
+        };
+      })(this));
     };
 
     BatmanObject.classDelegate = function() {
-      var options, properties, _i,
-        _this = this;
+      var options, properties, _i;
       properties = 2 <= arguments.length ? __slice.call(arguments, 0, _i = arguments.length - 1) : (_i = 0, []), options = arguments[_i++];
       if (options == null) {
         options = {};
@@ -3324,22 +3336,24 @@
       if (!options.to) {
         Batman.developer.warn('delegate must include to option', this, properties);
       }
-      return properties.forEach(function(property) {
-        return _this.classAccessor(property, {
-          get: function() {
-            var _ref;
-            return (_ref = this.get(options.to)) != null ? _ref.get(property) : void 0;
-          },
-          set: function(key, value) {
-            var _ref;
-            return (_ref = this.get(options.to)) != null ? _ref.set(property, value) : void 0;
-          },
-          unset: function() {
-            var _ref;
-            return (_ref = this.get(options.to)) != null ? _ref.unset(property) : void 0;
-          }
-        });
-      });
+      return properties.forEach((function(_this) {
+        return function(property) {
+          return _this.classAccessor(property, {
+            get: function() {
+              var _ref;
+              return (_ref = this.get(options.to)) != null ? _ref.get(property) : void 0;
+            },
+            set: function(key, value) {
+              var _ref;
+              return (_ref = this.get(options.to)) != null ? _ref.set(property, value) : void 0;
+            },
+            unset: function() {
+              var _ref;
+              return (_ref = this.get(options.to)) != null ? _ref.unset(property) : void 0;
+            }
+          });
+        };
+      })(this));
     };
 
     function BatmanObject() {
@@ -3842,24 +3856,25 @@
     };
 
     StorageAdapter.prototype.runFilter = function(position, action, env, callback) {
-      var actionFilters, allFilters, filters, next,
-        _this = this;
+      var actionFilters, allFilters, filters, next;
       this._inheritFilters();
       allFilters = this._batman.filters[position].all || [];
       actionFilters = this._batman.filters[position][action] || [];
       env.action = action;
       filters = position === 'before' ? actionFilters.concat(allFilters) : allFilters.concat(actionFilters);
-      next = function(newEnv) {
-        var nextFilter;
-        if (newEnv != null) {
-          env = newEnv;
-        }
-        if ((nextFilter = filters.shift()) != null) {
-          return nextFilter.call(_this, env, next);
-        } else {
-          return callback.call(_this, env);
-        }
-      };
+      next = (function(_this) {
+        return function(newEnv) {
+          var nextFilter;
+          if (newEnv != null) {
+            env = newEnv;
+          }
+          if ((nextFilter = filters.shift()) != null) {
+            return nextFilter.call(_this, env, next);
+          } else {
+            return callback.call(_this, env);
+          }
+        };
+      })(this);
       return next();
     };
 
@@ -3882,19 +3897,20 @@
     };
 
     StorageAdapter.prototype.perform = function(key, subject, options, callback) {
-      var env, next,
-        _this = this;
+      var env, next;
       options || (options = {});
       env = {
         options: options,
         subject: subject
       };
-      next = function(newEnv) {
-        if (newEnv != null) {
-          env = newEnv;
-        }
-        return _this.runAfterFilter(key, env, callback);
-      };
+      next = (function(_this) {
+        return function(newEnv) {
+          if (newEnv != null) {
+            env = newEnv;
+          }
+          return _this.runAfterFilter(key, env, callback);
+        };
+      })(this);
       this.runBeforeFilter(key, env, function(env) {
         return this[key](env, next);
       });
@@ -3914,8 +3930,7 @@
     __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
   Batman.RestStorage = (function(_super) {
-    var key, _fn, _i, _len, _ref,
-      _this = this;
+    var key, _fn, _i, _len, _ref;
 
     __extends(RestStorage, _super);
 
@@ -4282,7 +4297,7 @@
 
     return RestStorage;
 
-  }).call(this, Batman.StorageAdapter);
+  })(Batman.StorageAdapter);
 
 }).call(this);
 
@@ -4358,11 +4373,12 @@
     };
 
     LocalStorage.prototype.before('read', 'create', 'update', 'destroy', LocalStorage.skipIfError(function(env, next) {
-      var _this = this;
       if (env.action === 'create') {
-        env.id = env.subject.get('id') || env.subject._withoutDirtyTracking(function() {
-          return env.subject.set('id', _this.nextIdForRecord(env.subject));
-        });
+        env.id = env.subject.get('id') || env.subject._withoutDirtyTracking((function(_this) {
+          return function() {
+            return env.subject.set('id', _this.nextIdForRecord(env.subject));
+          };
+        })(this));
       } else {
         env.id = env.subject.get('id');
       }
@@ -4556,16 +4572,14 @@
 }).call(this);
 
 (function() {
-  var _ref,
-    __hasProp = {}.hasOwnProperty,
+  var __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
   Batman.ParamsPusher = (function(_super) {
     __extends(ParamsPusher, _super);
 
     function ParamsPusher() {
-      _ref = ParamsPusher.__super__.constructor.apply(this, arguments);
-      return _ref;
+      return ParamsPusher.__super__.constructor.apply(this, arguments);
     }
 
     ParamsPusher.prototype.redirect = function() {
@@ -4637,10 +4651,11 @@
     });
 
     NamedRouteQuery.accessor('withHash', function() {
-      var _this = this;
-      return new Batman.Accessible(function(hashValue) {
-        return _this.withHash(hashValue);
-      });
+      return new Batman.Accessible((function(_this) {
+        return function(hashValue) {
+          return _this.withHash(hashValue);
+        };
+      })(this));
     });
 
     NamedRouteQuery.prototype.withHash = function(hashValue) {
@@ -4724,7 +4739,7 @@
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
   Batman.Dispatcher = (function(_super) {
-    var ControllerDirectory, _ref;
+    var ControllerDirectory;
 
     __extends(Dispatcher, _super);
 
@@ -4767,8 +4782,7 @@
       __extends(ControllerDirectory, _super1);
 
       function ControllerDirectory() {
-        _ref = ControllerDirectory.__super__.constructor.apply(this, arguments);
-        return _ref;
+        return ControllerDirectory.__super__.constructor.apply(this, arguments);
       }
 
       ControllerDirectory.accessor('__app', Batman.Property.defaultAccessor);
@@ -4800,20 +4814,20 @@
     };
 
     Dispatcher.prototype.pathFromParams = function(params) {
-      var _ref1;
+      var _ref;
       if (typeof params === 'string') {
         return params;
       }
       params = this.constructor.paramsFromArgument(params);
-      return (_ref1 = this.routeForParams(params)) != null ? _ref1.pathFromParams(params) : void 0;
+      return (_ref = this.routeForParams(params)) != null ? _ref.pathFromParams(params) : void 0;
     };
 
     Dispatcher.prototype.dispatch = function(params, paramsMixin) {
-      var error, inferredParams, path, route, _ref1, _ref2;
+      var error, inferredParams, path, route, _ref, _ref1;
       inferredParams = this.constructor.paramsFromArgument(params);
       route = this.routeForParams(inferredParams);
       if (route) {
-        _ref1 = route.pathAndParamsFromArgument(inferredParams), path = _ref1[0], params = _ref1[1];
+        _ref = route.pathAndParamsFromArgument(inferredParams), path = _ref[0], params = _ref[1];
         if (paramsMixin) {
           Batman.mixin(params, paramsMixin);
         }
@@ -4834,8 +4848,8 @@
             return this.isPrevented = true;
           }
         };
-        if ((_ref2 = Batman.currentApp) != null) {
-          _ref2.fire('error', error);
+        if ((_ref1 = Batman.currentApp) != null) {
+          _ref1.fire('error', error);
         }
         if (error.isPrevented) {
           return params;
@@ -4849,7 +4863,7 @@
 
     return Dispatcher;
 
-  }).call(this, Batman.Object);
+  })(Batman.Object);
 
 }).call(this);
 
@@ -5053,16 +5067,14 @@
 }).call(this);
 
 (function() {
-  var _ref,
-    __hasProp = {}.hasOwnProperty,
+  var __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
   Batman.CallbackActionRoute = (function(_super) {
     __extends(CallbackActionRoute, _super);
 
     function CallbackActionRoute() {
-      _ref = CallbackActionRoute.__super__.constructor.apply(this, arguments);
-      return _ref;
+      return CallbackActionRoute.__super__.constructor.apply(this, arguments);
     }
 
     CallbackActionRoute.prototype.optionKeys = ['member', 'collection', 'callback', 'app'];
@@ -5082,8 +5094,7 @@
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
   Batman.Hash = (function(_super) {
-    var k, _fn, _i, _j, _len, _len1, _ref, _ref1,
-      _this = this;
+    var k, _fn, _i, _j, _len, _len1, _ref, _ref1;
 
     __extends(Hash, _super);
 
@@ -5179,10 +5190,11 @@
         return _results;
       }).call(this);
       this._preventMutationEvents(function() {
-        var _this = this;
-        return this.forEach(function(k) {
-          return _this.unset(k);
-        });
+        return this.forEach((function(_this) {
+          return function(k) {
+            return _this.unset(k);
+          };
+        })(this));
       });
       Batman.SimpleHash.prototype.clear.call(this);
       this.fire('itemsWereRemoved', keys, values);
@@ -5197,17 +5209,18 @@
       changedNewValues = [];
       changedOldValues = [];
       this._preventMutationEvents(function() {
-        var _this = this;
-        return Batman.forEach(object, function(k, v) {
-          if (_this.hasKey(k)) {
-            changedKeys.push(k);
-            changedOldValues.push(_this.get(k));
-            return changedNewValues.push(_this.set(k, v));
-          } else {
-            addedKeys.push(k);
-            return addedValues.push(_this.set(k, v));
-          }
-        });
+        return Batman.forEach(object, (function(_this) {
+          return function(k, v) {
+            if (_this.hasKey(k)) {
+              changedKeys.push(k);
+              changedOldValues.push(_this.get(k));
+              return changedNewValues.push(_this.set(k, v));
+            } else {
+              addedKeys.push(k);
+              return addedValues.push(_this.set(k, v));
+            }
+          };
+        })(this));
       });
       if (addedKeys.length > 0) {
         this.fire('itemsWereAdded', addedKeys, addedValues);
@@ -5227,23 +5240,26 @@
       changedOldValues = [];
       changedNewValues = [];
       this._preventMutationEvents(function() {
-        var _this = this;
-        this.forEach(function(k) {
-          if (!Batman.objectHasKey(object, k)) {
-            removedKeys.push(k);
-            return removedValues.push(_this.unset(k));
-          }
-        });
-        return Batman.forEach(object, function(k, v) {
-          if (_this.hasKey(k)) {
-            changedKeys.push(k);
-            changedOldValues.push(_this.get(k));
-            return changedNewValues.push(_this.set(k, v));
-          } else {
-            addedKeys.push(k);
-            return addedValues.push(_this.set(k, v));
-          }
-        });
+        this.forEach((function(_this) {
+          return function(k) {
+            if (!Batman.objectHasKey(object, k)) {
+              removedKeys.push(k);
+              return removedValues.push(_this.unset(k));
+            }
+          };
+        })(this));
+        return Batman.forEach(object, (function(_this) {
+          return function(k, v) {
+            if (_this.hasKey(k)) {
+              changedKeys.push(k);
+              changedOldValues.push(_this.get(k));
+              return changedNewValues.push(_this.set(k, v));
+            } else {
+              addedKeys.push(k);
+              return addedValues.push(_this.set(k, v));
+            }
+          };
+        })(this));
       });
       if (addedKeys.length > 0) {
         this.fire('itemsWereAdded', addedKeys, addedValues);
@@ -5276,7 +5292,7 @@
 
     return Hash;
 
-  }).call(this, Batman.Object);
+  })(Batman.Object);
 
 }).call(this);
 
@@ -5295,11 +5311,12 @@
     }
 
     RenderCache.prototype.viewForOptions = function(options) {
-      var _this = this;
       if (Batman.config.cacheViews || options.cache || options.viewClass.prototype.cache) {
-        return this.getOrSet(options, function() {
-          return _this._newViewFromOptions(Batman.extend({}, options));
-        });
+        return this.getOrSet(options, (function(_this) {
+          return function() {
+            return _this._newViewFromOptions(Batman.extend({}, options));
+          };
+        })(this));
       } else {
         return this._newViewFromOptions(options);
       }
@@ -5386,7 +5403,7 @@
         currentKeys = this.keyQueue.slice(0);
         for (i = _i = _ref = this.maximumLength, _ref1 = currentKeys.length; _ref <= _ref1 ? _i < _ref1 : _i > _ref1; i = _ref <= _ref1 ? ++_i : --_i) {
           key = currentKeys[i];
-          if (!this.get(key).isInDOM()) {
+          if (!this.get(key).isInDOM) {
             this.unset(key);
           }
         }
@@ -5484,48 +5501,50 @@
     };
 
     Controller.prototype.errorHandler = function(callback) {
-      var errorFrame, _ref,
-        _this = this;
+      var errorFrame, _ref;
       errorFrame = (_ref = this._actionFrames) != null ? _ref[this._actionFrames.length - 1] : void 0;
-      return function(err, result, env) {
-        if (err) {
-          if (errorFrame != null ? errorFrame.error : void 0) {
-            return;
+      return (function(_this) {
+        return function(err, result, env) {
+          if (err) {
+            if (errorFrame != null ? errorFrame.error : void 0) {
+              return;
+            }
+            if (errorFrame != null) {
+              errorFrame.error = err;
+            }
+            if (!_this.handleError(err)) {
+              throw err;
+            }
+          } else {
+            return typeof callback === "function" ? callback(result, env) : void 0;
           }
-          if (errorFrame != null) {
-            errorFrame.error = err;
-          }
-          if (!_this.handleError(err)) {
-            throw err;
-          }
-        } else {
-          return typeof callback === "function" ? callback(result, env) : void 0;
-        }
-      };
+        };
+      })(this);
     };
 
     Controller.prototype.handleError = function(error) {
-      var handled, _ref,
-        _this = this;
+      var handled, _ref;
       handled = false;
       if ((_ref = this.constructor._batman.getAll('errorHandlers')) != null) {
-        _ref.forEach(function(hash) {
-          return hash.forEach(function(key, value) {
-            var handler, _i, _len, _results;
-            if (error instanceof key) {
-              handled = true;
-              _results = [];
-              for (_i = 0, _len = value.length; _i < _len; _i++) {
-                handler = value[_i];
-                if (typeof handler === 'string') {
-                  handler = _this[handler];
+        _ref.forEach((function(_this) {
+          return function(hash) {
+            return hash.forEach(function(key, value) {
+              var handler, _i, _len, _results;
+              if (error instanceof key) {
+                handled = true;
+                _results = [];
+                for (_i = 0, _len = value.length; _i < _len; _i++) {
+                  handler = value[_i];
+                  if (typeof handler === 'string') {
+                    handler = _this[handler];
+                  }
+                  _results.push(handler.call(_this, error));
                 }
-                _results.push(handler.call(_this, error));
+                return _results;
               }
-              return _results;
-            }
-          });
-        });
+            });
+          };
+        })(this));
       }
       return handled;
     };
@@ -5565,8 +5584,7 @@
     };
 
     Controller.prototype.executeAction = function(action, params) {
-      var frame, oldRedirect, parentFrame, result, _ref, _ref1,
-        _this = this;
+      var frame, oldRedirect, parentFrame, result, _ref, _ref1;
       if (params == null) {
         params = this.get('params');
       }
@@ -5576,14 +5594,16 @@
         parentFrame: parentFrame,
         action: action,
         params: params
-      }, function() {
-        var _ref;
-        if (!_this._afterFilterRedirect) {
-          _this.fireLifecycleEvent('afterAction', frame.params, frame);
-        }
-        _this._resetActionFrames();
-        return (_ref = Batman.navigator) != null ? _ref.redirect = oldRedirect : void 0;
-      });
+      }, (function(_this) {
+        return function() {
+          var _ref;
+          if (!_this._afterFilterRedirect) {
+            _this.fireLifecycleEvent('afterAction', frame.params, frame);
+          }
+          _this._resetActionFrames();
+          return (_ref = Batman.navigator) != null ? _ref.redirect = oldRedirect : void 0;
+        };
+      })(this));
       this._actionFrames.push(frame);
       frame.startOperation({
         internal: true
@@ -5699,9 +5719,93 @@
   var __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
+  Batman.Params = (function(_super) {
+    __extends(Params, _super);
+
+    function Params(hash, navigator) {
+      this.hash = hash;
+      this.navigator = navigator;
+      Params.__super__.constructor.call(this, this.hash);
+      this.url = new Batman.UrlParams({}, this.navigator, this);
+    }
+
+    Params.accessor('url', function() {
+      return this.url;
+    });
+
+    return Params;
+
+  })(Batman.Hash);
+
+  Batman.UrlParams = (function(_super) {
+    __extends(UrlParams, _super);
+
+    function UrlParams(hash, navigator, params) {
+      this.hash = hash;
+      this.navigator = navigator;
+      this.params = params;
+      UrlParams.__super__.constructor.call(this, this.hash);
+      this.replace(this._paramsFromUri());
+      this._updateParams();
+      this.on('change', function(obj) {
+        obj._updateUrl();
+        return obj._updateParams();
+      });
+    }
+
+    UrlParams.prototype._updateUrl = function() {
+      return this.navigator.pushState(null, '', this._pathFromParams());
+    };
+
+    UrlParams.prototype._updateParams = function() {
+      return this.params.update(this.toObject());
+    };
+
+    UrlParams.prototype._paramsFromUri = function() {
+      return this._currentUri().queryParams;
+    };
+
+    UrlParams.prototype._currentPath = function() {
+      return this.params.get('path');
+    };
+
+    UrlParams.prototype._currentUri = function() {
+      return new Batman.URI(this._currentPath());
+    };
+
+    UrlParams.prototype._pathFromRoutes = function() {
+      var params, route;
+      route = this.navigator.app.get('currentRoute');
+      params = {
+        controller: route.controller,
+        action: route.action
+      };
+      Batman.mixin(params, this.toObject());
+      return this.navigator.app.get('dispatcher').pathFromParams(params);
+    };
+
+    UrlParams.prototype._pathFromParams = function() {
+      var path, uri;
+      if (path = this._pathFromRoutes()) {
+        return path;
+      }
+      uri = this._currentUri();
+      uri.queryParams = this.toObject();
+      return uri.toString();
+    };
+
+    return UrlParams;
+
+  })(Batman.Hash);
+
+}).call(this);
+
+(function() {
+  var __hasProp = {}.hasOwnProperty,
+    __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
+
   Batman.Set = (function(_super) {
-    var k, _fn, _i, _j, _len, _len1, _ref, _ref1,
-      _this = this;
+    var k, _fn, _i, _j, _len, _len1, _ref, _ref1;
 
     __extends(Set, _super);
 
@@ -5733,28 +5837,39 @@
           return this.length;
         },
         indexedBy: function() {
-          var _this = this;
-          return new Batman.TerminalAccessible(function(key) {
-            return _this.indexedBy(key);
-          });
+          return new Batman.TerminalAccessible((function(_this) {
+            return function(key) {
+              return _this.indexedBy(key);
+            };
+          })(this));
         },
         indexedByUnique: function() {
-          var _this = this;
-          return new Batman.TerminalAccessible(function(key) {
-            return _this.indexedByUnique(key);
-          });
+          return new Batman.TerminalAccessible((function(_this) {
+            return function(key) {
+              return _this.indexedByUnique(key);
+            };
+          })(this));
         },
         sortedBy: function() {
-          var _this = this;
-          return new Batman.TerminalAccessible(function(key) {
-            return _this.sortedBy(key);
-          });
+          return new Batman.TerminalAccessible((function(_this) {
+            return function(key) {
+              return _this.sortedBy(key);
+            };
+          })(this));
         },
         sortedByDescending: function() {
-          var _this = this;
-          return new Batman.TerminalAccessible(function(key) {
-            return _this.sortedBy(key, 'desc');
-          });
+          return new Batman.TerminalAccessible((function(_this) {
+            return function(key) {
+              return _this.sortedBy(key, 'desc');
+            };
+          })(this));
+        },
+        mappedTo: function() {
+          return new Batman.TerminalAccessible((function(_this) {
+            return function(key) {
+              return _this.mappedTo(key);
+            };
+          })(this));
         }
       };
       for (key in accessors) {
@@ -5853,21 +5968,19 @@
 
     return Set;
 
-  }).call(this, Batman.Object);
+  })(Batman.Object);
 
 }).call(this);
 
 (function() {
-  var _ref,
-    __hasProp = {}.hasOwnProperty,
+  var __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
   Batman.ErrorsSet = (function(_super) {
     __extends(ErrorsSet, _super);
 
     function ErrorsSet() {
-      _ref = ErrorsSet.__super__.constructor.apply(this, arguments);
-      return _ref;
+      return ErrorsSet.__super__.constructor.apply(this, arguments);
     }
 
     ErrorsSet.accessor(function(key) {
@@ -5889,8 +6002,7 @@
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
   Batman.SetProxy = (function(_super) {
-    var k, _fn, _i, _len, _ref,
-      _this = this;
+    var k, _fn, _i, _len, _ref;
 
     __extends(SetProxy, _super);
 
@@ -5949,7 +6061,7 @@
 
     Batman.Set._applySetAccessors(SetProxy);
 
-    _ref = ['add', 'insert', 'insertWithIndexes', 'remove', 'removeWithIndexes', 'at', 'find', 'clear', 'has', 'merge', 'toArray', 'isEmpty', 'indexedBy', 'indexedByUnique', 'sortedBy'];
+    _ref = ['add', 'insert', 'insertWithIndexes', 'remove', 'removeWithIndexes', 'at', 'find', 'clear', 'has', 'merge', 'toArray', 'isEmpty', 'indexedBy', 'indexedByUnique', 'sortedBy', 'mappedTo'];
     _fn = function(k) {
       return SetProxy.prototype[k] = function() {
         return this.base[k].apply(this.base, arguments);
@@ -5972,7 +6084,7 @@
 
     return SetProxy;
 
-  }).call(this, Batman.Object);
+  })(Batman.Object);
 
 }).call(this);
 
@@ -5995,13 +6107,16 @@
     }
 
     BinarySetOperation.prototype._setup = function(set, opposite) {
-      var _this = this;
-      set.on('itemsWereAdded', function(items) {
-        return _this._itemsWereAddedToSource.apply(_this, [set, opposite].concat(__slice.call(items)));
-      });
-      set.on('itemsWereRemoved', function(items) {
-        return _this._itemsWereRemovedFromSource.apply(_this, [set, opposite].concat(__slice.call(items)));
-      });
+      set.on('itemsWereAdded', (function(_this) {
+        return function(items) {
+          return _this._itemsWereAddedToSource.apply(_this, [set, opposite].concat(__slice.call(items)));
+        };
+      })(this));
+      set.on('itemsWereRemoved', (function(_this) {
+        return function(items) {
+          return _this._itemsWereRemovedFromSource.apply(_this, [set, opposite].concat(__slice.call(items)));
+        };
+      })(this));
       return this._itemsWereAddedToSource.apply(this, [set, opposite].concat(__slice.call(set.toArray())));
     };
 
@@ -6028,8 +6143,7 @@
 }).call(this);
 
 (function() {
-  var _ref,
-    __hasProp = {}.hasOwnProperty,
+  var __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
     __slice = [].slice;
 
@@ -6037,8 +6151,7 @@
     __extends(SetUnion, _super);
 
     function SetUnion() {
-      _ref = SetUnion.__super__.constructor.apply(this, arguments);
-      return _ref;
+      return SetUnion.__super__.constructor.apply(this, arguments);
     }
 
     SetUnion.prototype._itemsWereAddedToSource = function() {
@@ -6071,8 +6184,7 @@
 }).call(this);
 
 (function() {
-  var _ref,
-    __hasProp = {}.hasOwnProperty,
+  var __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
     __slice = [].slice;
 
@@ -6080,8 +6192,7 @@
     __extends(SetIntersection, _super);
 
     function SetIntersection() {
-      _ref = SetIntersection.__super__.constructor.apply(this, arguments);
-      return _ref;
+      return SetIntersection.__super__.constructor.apply(this, arguments);
     }
 
     SetIntersection.prototype._itemsWereAddedToSource = function() {
@@ -6116,8 +6227,7 @@
 }).call(this);
 
 (function() {
-  var _ref,
-    __hasProp = {}.hasOwnProperty,
+  var __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
     __slice = [].slice;
 
@@ -6125,8 +6235,7 @@
     __extends(SetComplement, _super);
 
     function SetComplement() {
-      _ref = SetComplement.__super__.constructor.apply(this, arguments);
-      return _ref;
+      return SetComplement.__super__.constructor.apply(this, arguments);
     }
 
     SetComplement.prototype._itemsWereAddedToSource = function() {
@@ -6227,8 +6336,7 @@
     StateMachine.InvalidTransitionError.prototype = new Error;
 
     StateMachine.transitions = function(table) {
-      var definePredicate, fromState, k, object, predicateKeys, toState, transitions, v, _fn, _ref,
-        _this = this;
+      var definePredicate, fromState, k, object, predicateKeys, toState, transitions, v, _fn, _ref;
       for (k in table) {
         v = table[k];
         if (!(v.from && v.to)) {
@@ -6246,23 +6354,27 @@
       }
       this.prototype.transitionTable = Batman.extend({}, this.prototype.transitionTable, table);
       predicateKeys = [];
-      definePredicate = function(state) {
-        var key;
-        key = "is" + (Batman.helpers.titleize(state));
-        if (_this.prototype[key] != null) {
-          return;
-        }
-        predicateKeys.push(key);
-        return _this.prototype[key] = function() {
-          return this.get('state') === state;
+      definePredicate = (function(_this) {
+        return function(state) {
+          var key;
+          key = "is" + (Batman.helpers.titleize(state));
+          if (_this.prototype[key] != null) {
+            return;
+          }
+          predicateKeys.push(key);
+          return _this.prototype[key] = function() {
+            return this.get('state') === state;
+          };
         };
-      };
+      })(this);
       _ref = this.prototype.transitionTable;
-      _fn = function(k) {
-        return _this.prototype[k] = function() {
-          return this.startTransition(k);
+      _fn = (function(_this) {
+        return function(k) {
+          return _this.prototype[k] = function() {
+            return this.startTransition(k);
+          };
         };
-      };
+      })(this);
       for (k in _ref) {
         transitions = _ref[k];
         if (!(!this.prototype[k])) {
@@ -6415,7 +6527,7 @@
     __slice = [].slice;
 
   Batman.Model = (function(_super) {
-    var functionName, _i, _j, _len, _len1, _ref, _ref1, _ref2;
+    var functionName, _i, _j, _len, _len1, _ref, _ref1;
 
     __extends(Model, _super);
 
@@ -6578,8 +6690,7 @@
     };
 
     Model.findWithOptions = function(id, options, callback) {
-      var record,
-        _this = this;
+      var record;
       if (options == null) {
         options = {};
       }
@@ -6593,10 +6704,12 @@
         });
         this._pending[id] = record;
       }
-      record.loadWithOptions(options, function() {
-        delete _this._pending[id];
-        return callback.apply(_this, arguments);
-      });
+      record.loadWithOptions(options, (function(_this) {
+        return function() {
+          delete _this._pending[id];
+          return callback.apply(_this, arguments);
+        };
+      })(this));
       return record;
     };
 
@@ -6614,17 +6727,18 @@
     };
 
     Model.loadWithOptions = function(options, callback) {
-      var _this = this;
       this.fire('loading', options);
-      return this._doStorageOperation('readAll', options, function(err, records, env) {
-        if (err != null) {
-          _this.fire('error', err);
-          return typeof callback === "function" ? callback(err, []) : void 0;
-        } else {
-          _this.fire('loaded', records, env);
-          return typeof callback === "function" ? callback(err, records, env) : void 0;
-        }
-      });
+      return this._doStorageOperation('readAll', options, (function(_this) {
+        return function(err, records, env) {
+          if (err != null) {
+            _this.fire('error', err);
+            return typeof callback === "function" ? callback(err, []) : void 0;
+          } else {
+            _this.fire('loaded', records, env);
+            return typeof callback === "function" ? callback(err, records, env) : void 0;
+          }
+        };
+      })(this));
     };
 
     Model.create = function(attrs, callback) {
@@ -6763,8 +6877,7 @@
       __extends(InstanceLifecycleStateMachine, _super1);
 
       function InstanceLifecycleStateMachine() {
-        _ref1 = InstanceLifecycleStateMachine.__super__.constructor.apply(this, arguments);
-        return _ref1;
+        return InstanceLifecycleStateMachine.__super__.constructor.apply(this, arguments);
       }
 
       InstanceLifecycleStateMachine.transitions({
@@ -6917,28 +7030,28 @@
     };
 
     Model.prototype.toJSON = function() {
-      var encoders, obj,
-        _this = this;
+      var encoders, obj;
       encoders = this._batman.get('encoders');
       if (!encoders || encoders.isEmpty()) {
         return {};
       }
       obj = {};
-      encoders.forEach(function(key, encoder) {
-        var encodedVal, val, _ref2;
-        if (!encoder.encode || (val = _this.get(key)) === void 0) {
-          return;
-        }
-        if ((encodedVal = encoder.encode(val, key, obj, _this)) !== void 0) {
-          return obj[(_ref2 = typeof encoder.as === "function" ? encoder.as(key, val, obj, _this) : void 0) != null ? _ref2 : encoder.as] = encodedVal;
-        }
-      });
+      encoders.forEach((function(_this) {
+        return function(key, encoder) {
+          var encodedVal, val, _ref1;
+          if (!encoder.encode || (val = _this.get(key)) === void 0) {
+            return;
+          }
+          if ((encodedVal = encoder.encode(val, key, obj, _this)) !== void 0) {
+            return obj[(_ref1 = typeof encoder.as === "function" ? encoder.as(key, val, obj, _this) : void 0) != null ? _ref1 : encoder.as] = encodedVal;
+          }
+        };
+      })(this));
       return obj;
     };
 
     Model.prototype.fromJSON = function(data) {
-      var encoders, key, obj, value,
-        _this = this;
+      var encoders, key, obj, value;
       obj = {};
       encoders = this._batman.get('encoders');
       if (!encoders || encoders.isEmpty() || !encoders.some(function(key, encoder) {
@@ -6949,27 +7062,31 @@
           obj[key] = value;
         }
       } else {
-        encoders.forEach(function(key, encoder) {
-          var as, _ref2;
-          if (!encoder.decode) {
-            return;
-          }
-          as = (_ref2 = typeof encoder.as === "function" ? encoder.as(key, data[key], obj, _this) : void 0) != null ? _ref2 : encoder.as;
-          value = data[as];
-          if (value === void 0 || (value === null && (_this._associationForAttribute(as) != null))) {
-            return;
-          }
-          return obj[key] = encoder.decode(value, as, data, obj, _this);
-        });
+        encoders.forEach((function(_this) {
+          return function(key, encoder) {
+            var as, _ref1;
+            if (!encoder.decode) {
+              return;
+            }
+            as = (_ref1 = typeof encoder.as === "function" ? encoder.as(key, data[key], obj, _this) : void 0) != null ? _ref1 : encoder.as;
+            value = data[as];
+            if (value === void 0 || (value === null && (_this._associationForAttribute(as) != null))) {
+              return;
+            }
+            return obj[key] = encoder.decode(value, as, data, obj, _this);
+          };
+        })(this));
       }
       if (this.constructor.primaryKey !== 'id') {
         obj.id = data[this.constructor.primaryKey];
       }
-      Batman.developer["do"](function() {
-        if ((!encoders) || encoders.length <= 1) {
-          return Batman.developer.warn("Warning: Model " + (Batman.functionName(_this.constructor)) + " has suspiciously few decoders!");
-        }
-      });
+      Batman.developer["do"]((function(_this) {
+        return function() {
+          if ((!encoders) || encoders.length <= 1) {
+            return Batman.developer.warn("Warning: Model " + (Batman.functionName(_this.constructor)) + " has suspiciously few decoders!");
+          }
+        };
+      })(this));
       return this.mixin(obj);
     };
 
@@ -6978,9 +7095,9 @@
     };
 
     Model.prototype.load = function(options, callback) {
-      var _ref2;
+      var _ref1;
       if (!callback) {
-        _ref2 = [{}, options], options = _ref2[0], callback = _ref2[1];
+        _ref1 = [{}, options], options = _ref1[0], callback = _ref1[1];
       } else {
         options = {
           data: options
@@ -6990,10 +7107,9 @@
     };
 
     Model.prototype.loadWithOptions = function(options, callback) {
-      var callbackQueue, hasOptions, _ref2,
-        _this = this;
+      var callbackQueue, hasOptions, _ref1;
       hasOptions = Object.keys(options).length !== 0;
-      if ((_ref2 = this.get('lifecycle.state')) === 'destroying' || _ref2 === 'destroyed') {
+      if ((_ref1 = this.get('lifecycle.state')) === 'destroying' || _ref1 === 'destroyed') {
         if (typeof callback === "function") {
           callback(new Error("Can't load a destroyed record!"));
         }
@@ -7007,23 +7123,25 @@
         if (!hasOptions) {
           this._currentLoad = callbackQueue;
         }
-        return this._doStorageOperation('read', options, function(err, record, env) {
-          var _j, _len1;
-          if (!err) {
-            _this.get('lifecycle').loaded();
-            record = _this.constructor._mapIdentity(record);
-            record.get('errors').clear();
-          } else {
-            _this.get('lifecycle').error();
-          }
-          if (!hasOptions) {
-            _this._currentLoad = null;
-          }
-          for (_j = 0, _len1 = callbackQueue.length; _j < _len1; _j++) {
-            callback = callbackQueue[_j];
-            callback(err, record, env);
-          }
-        });
+        return this._doStorageOperation('read', options, (function(_this) {
+          return function(err, record, env) {
+            var _j, _len1;
+            if (!err) {
+              _this.get('lifecycle').loaded();
+              record = _this.constructor._mapIdentity(record);
+              record.get('errors').clear();
+            } else {
+              _this.get('lifecycle').error();
+            }
+            if (!hasOptions) {
+              _this._currentLoad = null;
+            }
+            for (_j = 0, _len1 = callbackQueue.length; _j < _len1; _j++) {
+              callback = callbackQueue[_j];
+              callback(err, record, env);
+            }
+          };
+        })(this));
       } else {
         if (this.get('lifecycle.state') === 'loading' && !hasOptions) {
           if (callback != null) {
@@ -7036,91 +7154,94 @@
     };
 
     Model.prototype.save = function(options, callback) {
-      var endState, isNew, startState, storageOperation, _ref2, _ref3,
-        _this = this;
+      var endState, isNew, startState, storageOperation, _ref1, _ref2;
       if (!callback) {
-        _ref2 = [{}, options], options = _ref2[0], callback = _ref2[1];
+        _ref1 = [{}, options], options = _ref1[0], callback = _ref1[1];
       }
       isNew = this.isNew();
-      _ref3 = isNew ? ['create', 'create', 'created'] : ['save', 'update', 'saved'], startState = _ref3[0], storageOperation = _ref3[1], endState = _ref3[2];
+      _ref2 = isNew ? ['create', 'create', 'created'] : ['save', 'update', 'saved'], startState = _ref2[0], storageOperation = _ref2[1], endState = _ref2[2];
       if (this.get('lifecycle').startTransition(startState)) {
-        return this.validate(function(error, errors) {
-          var associations, payload;
-          if (error || errors.length) {
-            _this.get('lifecycle').failedValidation();
-            return typeof callback === "function" ? callback(error || errors, _this) : void 0;
-          }
-          _this.fire('validated');
-          associations = _this.constructor._batman.get('associations');
-          _this._withoutDirtyTracking(function() {
-            var _ref4,
-              _this = this;
-            return associations != null ? (_ref4 = associations.getByType('belongsTo')) != null ? _ref4.forEach(function(association, label) {
-              return association.apply(_this);
-            }) : void 0 : void 0;
-          });
-          payload = Batman.extend({}, options, {
-            data: options
-          });
-          return _this._doStorageOperation(storageOperation, payload, function(err, record, env) {
-            if (!err) {
-              _this.get('dirtyKeys').clear();
-              _this.get('_dirtiedKeys').clear();
-              if (associations) {
-                record._withoutDirtyTracking(function() {
-                  var _ref4, _ref5;
-                  if ((_ref4 = associations.getByType('hasOne')) != null) {
-                    _ref4.forEach(function(association, label) {
-                      return association.apply(err, record);
-                    });
-                  }
-                  return (_ref5 = associations.getByType('hasMany')) != null ? _ref5.forEach(function(association, label) {
-                    return association.apply(err, record);
-                  }) : void 0;
-                });
-              }
-              record = _this.constructor._mapIdentity(record);
-              _this.get('lifecycle').startTransition(endState);
-            } else {
-              if (err instanceof Batman.ErrorsSet) {
-                _this.get('lifecycle').failedValidation();
-              } else {
-                _this.get('lifecycle').error();
-              }
+        return this.validate((function(_this) {
+          return function(error, errors) {
+            var associations, payload;
+            if (error || errors.length) {
+              _this.get('lifecycle').failedValidation();
+              return typeof callback === "function" ? callback(error || errors, _this) : void 0;
             }
-            return typeof callback === "function" ? callback(err, record || _this, env) : void 0;
-          });
-        });
+            _this.fire('validated');
+            associations = _this.constructor._batman.get('associations');
+            _this._withoutDirtyTracking(function() {
+              var _ref3;
+              return associations != null ? (_ref3 = associations.getByType('belongsTo')) != null ? _ref3.forEach((function(_this) {
+                return function(association, label) {
+                  return association.apply(_this);
+                };
+              })(this)) : void 0 : void 0;
+            });
+            payload = Batman.extend({}, options, {
+              data: options
+            });
+            return _this._doStorageOperation(storageOperation, payload, function(err, record, env) {
+              if (!err) {
+                _this.get('dirtyKeys').clear();
+                _this.get('_dirtiedKeys').clear();
+                if (associations) {
+                  record._withoutDirtyTracking(function() {
+                    var _ref3, _ref4;
+                    if ((_ref3 = associations.getByType('hasOne')) != null) {
+                      _ref3.forEach(function(association, label) {
+                        return association.apply(err, record);
+                      });
+                    }
+                    return (_ref4 = associations.getByType('hasMany')) != null ? _ref4.forEach(function(association, label) {
+                      return association.apply(err, record);
+                    }) : void 0;
+                  });
+                }
+                record = _this.constructor._mapIdentity(record);
+                _this.get('lifecycle').startTransition(endState);
+              } else {
+                if (err instanceof Batman.ErrorsSet) {
+                  _this.get('lifecycle').failedValidation();
+                } else {
+                  _this.get('lifecycle').error();
+                }
+              }
+              return typeof callback === "function" ? callback(err, record || _this, env) : void 0;
+            });
+          };
+        })(this));
       } else {
         return typeof callback === "function" ? callback(new Batman.StateMachine.InvalidTransitionError("Can't save while in state " + (this.get('lifecycle.state')))) : void 0;
       }
     };
 
     Model.prototype.destroy = function(options, callback) {
-      var _ref2,
-        _this = this;
+      var _ref1;
       if (!callback) {
-        _ref2 = [{}, options], options = _ref2[0], callback = _ref2[1];
+        _ref1 = [{}, options], options = _ref1[0], callback = _ref1[1];
       }
       if (this.get('lifecycle').destroy()) {
         return this._doStorageOperation('destroy', {
           data: options
-        }, function(err, record, env) {
-          if (!err) {
-            _this.constructor.get('loaded').remove(_this);
-            _this.get('lifecycle').destroyed();
-          } else {
-            _this.get('lifecycle').error();
-          }
-          return typeof callback === "function" ? callback(err, record, env) : void 0;
-        });
+        }, (function(_this) {
+          return function(err, record, env) {
+            if (!err) {
+              _this.constructor.get('loaded').remove(_this);
+              _this.get('lifecycle').destroyed();
+            } else {
+              _this.get('lifecycle').error();
+            }
+            return typeof callback === "function" ? callback(err, record, env) : void 0;
+          };
+        })(this));
       } else {
         return typeof callback === "function" ? callback(new Batman.StateMachine.InvalidTransitionError("Can't destroy while in state " + (this.get('lifecycle.state')))) : void 0;
       }
     };
 
     Model.prototype.validate = function(callback) {
-      var args, condition, count, e, errors, finishedValidation, key, validator, validators, _j, _k, _len1, _len2, _ref2;
+      var args, condition, count, e, errors, finishedValidation, key, validator, validators, _j, _k, _len1, _len2, _ref1;
       errors = this.get('errors');
       errors.clear();
       validators = this._batman.get('validators') || [];
@@ -7133,8 +7254,12 @@
       count = validators.reduce((function(acc, validator) {
         return acc + validator.keys.length;
       }), 0);
-      finishedValidation = function() {
-        if (--count === 0) {
+      finishedValidation = function(decrementBy) {
+        if (decrementBy == null) {
+          decrementBy = 1;
+        }
+        count -= decrementBy;
+        if (count === 0) {
           return typeof callback === "function" ? callback(void 0, errors) : void 0;
         }
       };
@@ -7143,20 +7268,20 @@
         if (validator["if"]) {
           condition = typeof validator["if"] === 'string' ? this.get(validator["if"]) : validator["if"].call(this, errors, this, key);
           if (!condition) {
-            finishedValidation();
+            finishedValidation(validator.keys.length);
             continue;
           }
         }
         if (validator.unless) {
           condition = typeof validator.unless === 'string' ? this.get(validator.unless) : validator.unless.call(this, errors, this, key);
           if (condition) {
-            finishedValidation();
+            finishedValidation(validator.keys.length);
             continue;
           }
         }
-        _ref2 = validator.keys;
-        for (_k = 0, _len2 = _ref2.length; _k < _len2; _k++) {
-          key = _ref2[_k];
+        _ref1 = validator.keys;
+        for (_k = 0, _len2 = _ref1.length; _k < _len2; _k++) {
+          key = _ref1[_k];
           args = [errors, this, key, finishedValidation];
           try {
             if (validator.validator) {
@@ -7198,18 +7323,19 @@
     };
 
     Model.prototype._associationForAttribute = function(attribute) {
-      var _ref2;
-      return (_ref2 = this.constructor._batman.get('associations')) != null ? _ref2.get(attribute) : void 0;
+      var _ref1;
+      return (_ref1 = this.constructor._batman.get('associations')) != null ? _ref1.get(attribute) : void 0;
     };
 
     Model.prototype._doStorageOperation = function(operation, options, callback) {
-      var adapter,
-        _this = this;
+      var adapter;
       Batman.developer.assert(this.hasStorage(), "Can't " + operation + " model " + (Batman.functionName(this.constructor)) + " without any storage adapters!");
       adapter = this._batman.get('storage');
-      return adapter.perform(operation, this, options, function() {
-        return callback.apply(null, arguments);
-      });
+      return adapter.perform(operation, this, options, (function(_this) {
+        return function() {
+          return callback.apply(null, arguments);
+        };
+      })(this));
     };
 
     Model.prototype._withoutDirtyTracking = function(block) {
@@ -7223,9 +7349,9 @@
       return result;
     };
 
-    _ref2 = ['load', 'save', 'validate', 'destroy'];
-    for (_j = 0, _len1 = _ref2.length; _j < _len1; _j++) {
-      functionName = _ref2[_j];
+    _ref1 = ['load', 'save', 'validate', 'destroy'];
+    for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
+      functionName = _ref1[_j];
       Model.prototype[functionName] = Batman.Property.wrapTrackingPrevention(Model.prototype[functionName]);
     }
 
@@ -7240,8 +7366,8 @@
     };
 
     Model.prototype.reflectOnAssociation = function(associationLabel) {
-      var _ref3;
-      return (_ref3 = this.constructor._batman.get('associations')) != null ? _ref3.getByLabel(associationLabel) : void 0;
+      var _ref2;
+      return (_ref2 = this.constructor._batman.get('associations')) != null ? _ref2.getByLabel(associationLabel) : void 0;
     };
 
     Model.prototype.transaction = function() {
@@ -7249,7 +7375,7 @@
     };
 
     Model.prototype._transaction = function(visited, stack) {
-      var attributes, hasManys, index, key, label, newValues, transaction, value, _k, _len2, _ref3, _ref4;
+      var attributes, hasManys, index, key, label, newValues, transaction, value, _k, _len2, _ref2, _ref3;
       index = visited.indexOf(this);
       if (index !== -1) {
         return stack[index];
@@ -7260,9 +7386,9 @@
         hasManys = hasManys.filter(function(association) {
           return association.options.includeInTransaction;
         });
-        _ref3 = hasManys.mapToProperty('label');
-        for (_k = 0, _len2 = _ref3.length; _k < _len2; _k++) {
-          label = _ref3[_k];
+        _ref2 = hasManys.mapToProperty('label');
+        for (_k = 0, _len2 = _ref2.length; _k < _len2; _k++) {
+          label = _ref2[_k];
           this.get(label);
         }
       }
@@ -7283,9 +7409,9 @@
         return transaction.updateAttributes(attributes);
       });
       transaction._batman.base = this;
-      _ref4 = Batman.Transaction;
-      for (key in _ref4) {
-        value = _ref4[key];
+      _ref3 = Batman.Transaction;
+      for (key in _ref3) {
+        value = _ref3[key];
         transaction[key] = value;
       }
       transaction.accessor('isTransaction', function() {
@@ -7299,23 +7425,24 @@
 
     return Model;
 
-  }).call(this, Batman.Object);
+  })(Batman.Object);
 
 }).call(this);
 
 (function() {
-  var k, _fn, _i, _len, _ref,
-    _this = this;
+  var k, _fn, _i, _len, _ref;
 
   _ref = Batman.AssociationCurator.availableAssociations;
-  _fn = function(k) {
-    return Batman.Model[k] = function(label, scope) {
-      var collection, _base;
-      Batman.initializeObject(this);
-      collection = (_base = this._batman).associations || (_base.associations = new Batman.AssociationCurator(this));
-      return collection.add(new Batman["" + (Batman.helpers.titleize(k)) + "Association"](this, label, scope));
+  _fn = (function(_this) {
+    return function(k) {
+      return Batman.Model[k] = function(label, scope) {
+        var collection, _base;
+        Batman.initializeObject(this);
+        collection = (_base = this._batman).associations || (_base.associations = new Batman.AssociationCurator(this));
+        return collection.add(new Batman["" + (Batman.helpers.titleize(k)) + "Association"](this, label, scope));
+      };
     };
-  };
+  })(this);
   for (_i = 0, _len = _ref.length; _i < _len; _i++) {
     k = _ref[_i];
     _fn(k);
@@ -7386,13 +7513,14 @@
     };
 
     AssociationProxy.prototype.load = function(callback) {
-      var _this = this;
-      this.fetch(function(err, proxiedRecord) {
-        if (!err) {
-          _this._setTarget(proxiedRecord);
-        }
-        return typeof callback === "function" ? callback(err, proxiedRecord) : void 0;
-      });
+      this.fetch((function(_this) {
+        return function(err, proxiedRecord) {
+          if (!err) {
+            _this._setTarget(proxiedRecord);
+          }
+          return typeof callback === "function" ? callback(err, proxiedRecord) : void 0;
+        };
+      })(this));
       return this.get('target');
     };
 
@@ -7448,16 +7576,14 @@
 }).call(this);
 
 (function() {
-  var _ref,
-    __hasProp = {}.hasOwnProperty,
+  var __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
   Batman.HasOneProxy = (function(_super) {
     __extends(HasOneProxy, _super);
 
     function HasOneProxy() {
-      _ref = HasOneProxy.__super__.constructor.apply(this, arguments);
-      return _ref;
+      return HasOneProxy.__super__.constructor.apply(this, arguments);
     }
 
     HasOneProxy.accessor('primaryValue', function() {
@@ -7469,8 +7595,7 @@
     };
 
     HasOneProxy.prototype.fetchFromRemote = function(callback) {
-      var loadOptions,
-        _this = this;
+      var loadOptions;
       loadOptions = {
         data: {}
       };
@@ -7479,13 +7604,15 @@
         loadOptions.collectionUrl = this.association.options.url;
         loadOptions.urlContext = this.model;
       }
-      return this.association.getRelatedModel().loadWithOptions(loadOptions, function(error, loadedRecords) {
-        if (!loadedRecords || loadedRecords.length <= 0) {
-          return callback(error || new Error("Couldn't find related record!"), void 0);
-        } else {
-          return callback(void 0, loadedRecords[0]);
-        }
-      });
+      return this.association.getRelatedModel().loadWithOptions(loadOptions, (function(_this) {
+        return function(error, loadedRecords) {
+          if (!loadedRecords || loadedRecords.length <= 0) {
+            return callback(error || new Error("Couldn't find related record!"), void 0);
+          } else {
+            return callback(void 0, loadedRecords[0]);
+          }
+        };
+      })(this));
     };
 
     return HasOneProxy;
@@ -7495,16 +7622,14 @@
 }).call(this);
 
 (function() {
-  var _ref,
-    __hasProp = {}.hasOwnProperty,
+  var __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
   Batman.BelongsToProxy = (function(_super) {
     __extends(BelongsToProxy, _super);
 
     function BelongsToProxy() {
-      _ref = BelongsToProxy.__super__.constructor.apply(this, arguments);
-      return _ref;
+      return BelongsToProxy.__super__.constructor.apply(this, arguments);
     }
 
     BelongsToProxy.accessor('foreignValue', function() {
@@ -7531,16 +7656,14 @@
 }).call(this);
 
 (function() {
-  var _ref,
-    __hasProp = {}.hasOwnProperty,
+  var __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
   Batman.PolymorphicBelongsToProxy = (function(_super) {
     __extends(PolymorphicBelongsToProxy, _super);
 
     function PolymorphicBelongsToProxy() {
-      _ref = PolymorphicBelongsToProxy.__super__.constructor.apply(this, arguments);
-      return _ref;
+      return PolymorphicBelongsToProxy.__super__.constructor.apply(this, arguments);
     }
 
     PolymorphicBelongsToProxy.accessor('foreignTypeValue', function() {
@@ -7567,8 +7690,7 @@
 }).call(this);
 
 (function() {
-  var _ref,
-    __hasProp = {}.hasOwnProperty,
+  var __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
   Batman.Accessible = (function(_super) {
@@ -7586,8 +7708,7 @@
     __extends(TerminalAccessible, _super);
 
     function TerminalAccessible() {
-      _ref = TerminalAccessible.__super__.constructor.apply(this, arguments);
-      return _ref;
+      return TerminalAccessible.__super__.constructor.apply(this, arguments);
     }
 
     TerminalAccessible.prototype.propertyClass = Batman.Property;
@@ -7600,10 +7721,10 @@
 
 (function() {
   Batman.URI = (function() {
-    /*
-    # URI parsing
-    */
 
+    /*
+     * URI parsing
+     */
     var attributes, childKeyMatchers, decodeQueryComponent, encodeComponent, encodeQueryComponent, keyVal, nameParser, normalizeParams, plus, queryFromParams, r20, strictParser;
 
     strictParser = /^(?:([^:\/?#]+):)?(?:\/\/((?:(([^:@]*)(?::([^:@]*))?)?@)?([^:\/?#]*)(?::(\d*))?))?((((?:[^?#\/]*\/)*)([^?#]*))(?:\?([^#]*))?(?:#(.*))?)/;
@@ -7664,10 +7785,10 @@
       return splitPath[splitPath.length - 1];
     };
 
-    /*
-    # query parsing
-    */
 
+    /*
+     * query parsing
+     */
 
     URI.paramsFromQuery = function(query) {
       var matches, params, segment, _i, _len, _ref;
@@ -7742,10 +7863,10 @@
       return params;
     };
 
-    /*
-    # query building
-    */
 
+    /*
+     * query building
+     */
 
     URI.queryFromParams = queryFromParams = function(value, prefix) {
       var arrayResults, k, v, valueType;
@@ -7966,16 +8087,19 @@
     __extends(SetObserver, _super);
 
     function SetObserver(base) {
-      var _this = this;
       this.base = base;
       this._itemObservers = new Batman.SimpleHash;
       this._setObservers = new Batman.SimpleHash;
-      this._setObservers.set("itemsWereAdded", function() {
-        return _this.fire.apply(_this, ['itemsWereAdded'].concat(__slice.call(arguments)));
-      });
-      this._setObservers.set("itemsWereRemoved", function() {
-        return _this.fire.apply(_this, ['itemsWereRemoved'].concat(__slice.call(arguments)));
-      });
+      this._setObservers.set("itemsWereAdded", (function(_this) {
+        return function() {
+          return _this.fire.apply(_this, ['itemsWereAdded'].concat(__slice.call(arguments)));
+        };
+      })(this));
+      this._setObservers.set("itemsWereRemoved", (function(_this) {
+        return function() {
+          return _this.fire.apply(_this, ['itemsWereRemoved'].concat(__slice.call(arguments)));
+        };
+      })(this));
       this.on('itemsWereAdded', this.startObservingItems.bind(this));
       this.on('itemsWereRemoved', this.stopObservingItems.bind(this));
     }
@@ -7985,14 +8109,15 @@
     SetObserver.prototype.observerForItemAndKey = function(item, key) {};
 
     SetObserver.prototype._getOrSetObserverForItemAndKey = function(item, key) {
-      var _this = this;
-      return this._itemObservers.getOrSet(item, function() {
-        var observersByKey;
-        observersByKey = new Batman.SimpleHash;
-        return observersByKey.getOrSet(key, function() {
-          return _this.observerForItemAndKey(item, key);
-        });
-      });
+      return this._itemObservers.getOrSet(item, (function(_this) {
+        return function() {
+          var observersByKey;
+          observersByKey = new Batman.SimpleHash;
+          return observersByKey.getOrSet(key, function() {
+            return _this.observerForItemAndKey(item, key);
+          });
+        };
+      })(this));
     };
 
     SetObserver.prototype.startObserving = function() {
@@ -8036,18 +8161,20 @@
     };
 
     SetObserver.prototype._manageItemObservers = function(method) {
-      var _this = this;
-      return this.base.forEach(function(item) {
-        return _this._manageObserversForItem(item, method);
-      });
+      return this.base.forEach((function(_this) {
+        return function(item) {
+          return _this._manageObserversForItem(item, method);
+        };
+      })(this));
     };
 
     SetObserver.prototype._manageSetObservers = function(method) {
-      var _this = this;
       if (this.base.isObservable) {
-        return this._setObservers.forEach(function(key, observer) {
-          return _this.base.event(key)[method](observer);
-        });
+        return this._setObservers.forEach((function(_this) {
+          return function(key, observer) {
+            return _this.base.event(key)[method](observer);
+          };
+        })(this));
       }
     };
 
@@ -8066,7 +8193,6 @@
     __extends(SetSort, _super);
 
     function SetSort(base, key, order) {
-      var _this = this;
       this.key = key;
       if (order == null) {
         order = "asc";
@@ -8077,29 +8203,32 @@
       this.isSorted = true;
       if (this.isCollectionEventEmitter) {
         this._setObserver.observedItemKeys = [this.key];
-        this._setObserver.observerForItemAndKey = function(item) {
-          return function(newValue, oldValue) {
-            return _this._handleItemsModified(item, newValue, oldValue);
+        this._setObserver.observerForItemAndKey = (function(_this) {
+          return function(item) {
+            return function(newValue, oldValue) {
+              return _this._handleItemsModified(item, newValue, oldValue);
+            };
           };
-        };
+        })(this);
       }
       this._reIndex();
     }
 
     SetSort.prototype._handleItemsModified = function(item, newValue, oldValue) {
-      var match, newIndex, newStorage, oldIndex, proxyItem, wrappedCompare, _ref, _ref1,
-        _this = this;
+      var match, newIndex, newStorage, oldIndex, proxyItem, wrappedCompare, _ref, _ref1;
       proxyItem = {};
       proxyItem[this.key] = oldValue;
-      wrappedCompare = function(a, b) {
-        if (a === item) {
-          a = proxyItem;
-        }
-        if (b === item) {
-          b = proxyItem;
-        }
-        return _this.compareElements(a, b);
-      };
+      wrappedCompare = (function(_this) {
+        return function(a, b) {
+          if (a === item) {
+            a = proxyItem;
+          }
+          if (b === item) {
+            b = proxyItem;
+          }
+          return _this.compareElements(a, b);
+        };
+      })(this);
       newStorage = this._storage.slice();
       _ref = this.constructor._binarySearch(newStorage, item, wrappedCompare), match = _ref.match, oldIndex = _ref.index;
       if (!match) {
@@ -8352,8 +8481,7 @@
     AssociationSet.accessor('loaded', Batman.Property.defaultAccessor);
 
     AssociationSet.prototype.load = function(options, callback) {
-      var loadOptions,
-        _this = this;
+      var loadOptions;
       loadOptions = this._getLoadOptions();
       if (!callback) {
         callback = options;
@@ -8363,12 +8491,14 @@
       if (this.foreignKeyValue == null) {
         return callback(void 0, this);
       }
-      return this.association.getRelatedModel().loadWithOptions(loadOptions, function(err, records, env) {
-        if (!err) {
-          _this.markAsLoaded();
-        }
-        return callback(err, _this, env);
-      });
+      return this.association.getRelatedModel().loadWithOptions(loadOptions, (function(_this) {
+        return function(err, records, env) {
+          if (!err) {
+            _this.markAsLoaded();
+          }
+          return callback(err, _this, env);
+        };
+      })(this));
     };
 
     AssociationSet.prototype._getLoadOptions = function() {
@@ -8466,8 +8596,7 @@
     __extends(SetMapping, _super);
 
     function SetMapping(base, key) {
-      var initialValues,
-        _this = this;
+      var initialValues;
       this.base = base;
       this.key = key;
       initialValues = this.base.mapToProperty(this.key);
@@ -8475,11 +8604,13 @@
       SetMapping.__super__.constructor.apply(this, initialValues);
       this._setObserver = new Batman.SetObserver(this.base);
       this._setObserver.observedItemKeys = [this.key];
-      this._setObserver.observerForItemAndKey = function(item) {
-        return function(newValue, oldValue) {
-          return _this._handleItemModified(item, newValue, oldValue);
+      this._setObserver.observerForItemAndKey = (function(_this) {
+        return function(item) {
+          return function(newValue, oldValue) {
+            return _this._handleItemModified(item, newValue, oldValue);
+          };
         };
-      };
+      })(this);
       this._setObserver.on('itemsWereAdded', this._handleItemsAdded.bind(this));
       this._setObserver.on('itemsWereRemoved', this._handleItemsRemoved.bind(this));
       this._setObserver.startObserving();
@@ -8575,7 +8706,6 @@
     SetIndex.prototype.propertyClass = Batman.Property;
 
     function SetIndex(base, key) {
-      var _this = this;
       this.base = base;
       this.key = key;
       SetIndex.__super__.constructor.call(this);
@@ -8584,12 +8714,16 @@
         this._setObserver = new Batman.SetObserver(this.base);
         this._setObserver.observedItemKeys = [this.key];
         this._setObserver.observerForItemAndKey = this.observerForItemAndKey.bind(this);
-        this._setObserver.on('itemsWereAdded', function(items) {
-          return _this._addItems(items);
-        });
-        this._setObserver.on('itemsWereRemoved', function(items) {
-          return _this._removeItems(items);
-        });
+        this._setObserver.on('itemsWereAdded', (function(_this) {
+          return function(items) {
+            return _this._addItems(items);
+          };
+        })(this));
+        this._setObserver.on('itemsWereRemoved', (function(_this) {
+          return function(items) {
+            return _this._removeItems(items);
+          };
+        })(this));
       }
       this._addItems(this.base._storage);
       this.startObserving();
@@ -8610,20 +8744,22 @@
     };
 
     SetIndex.prototype.observerForItemAndKey = function(item, key) {
-      var _this = this;
-      return function(newKey, oldKey) {
-        _this._removeItemsFromKey(oldKey, [item]);
-        return _this._addItemsToKey(newKey, [item]);
-      };
+      return (function(_this) {
+        return function(newKey, oldKey) {
+          _this._removeItemsFromKey(oldKey, [item]);
+          return _this._addItemsToKey(newKey, [item]);
+        };
+      })(this);
     };
 
     SetIndex.prototype.forEach = function(iterator, ctx) {
-      var _this = this;
-      return this._storage.forEach(function(key, set) {
-        if (set.get('length') > 0) {
-          return iterator.call(ctx, key, set, _this);
-        }
-      });
+      return this._storage.forEach((function(_this) {
+        return function(key, set) {
+          if (set.get('length') > 0) {
+            return iterator.call(ctx, key, set, _this);
+          }
+        };
+      })(this));
     };
 
     SetIndex.prototype.toArray = function() {
@@ -8783,14 +8919,15 @@
     };
 
     AssociationSetIndex.prototype.forEach = function(iterator, ctx) {
-      var _this = this;
-      return this.association.proxies.forEach(function(record, set) {
-        var key;
-        key = _this.association.indexValueForRecord(record);
-        if (set.get('length') > 0) {
-          return iterator.call(ctx, key, set, _this);
-        }
-      });
+      return this.association.proxies.forEach((function(_this) {
+        return function(record, set) {
+          var key;
+          key = _this.association.indexValueForRecord(record);
+          if (set.get('length') > 0) {
+            return iterator.call(ctx, key, set, _this);
+          }
+        };
+      })(this));
     };
 
     AssociationSetIndex.prototype.toArray = function() {
@@ -8907,7 +9044,6 @@
     }
 
     Navigator.prototype.start = function() {
-      var _this = this;
       if (typeof window === 'undefined') {
         return;
       }
@@ -8917,13 +9053,15 @@
       this.started = true;
       this.startWatching();
       Batman.currentApp.prevent('ready');
-      return Batman.setImmediate(function() {
-        if (_this.started && Batman.currentApp) {
-          _this.checkInitialHash();
-          _this.handleCurrentLocation();
-          return Batman.currentApp.allowAndFire('ready');
-        }
-      });
+      return Batman.setImmediate((function(_this) {
+        return function() {
+          if (_this.started && Batman.currentApp) {
+            _this.checkInitialHash();
+            _this.handleCurrentLocation();
+            return Batman.currentApp.allowAndFire('ready');
+          }
+        };
+      })(this));
     };
 
     Navigator.prototype.stop = function() {
@@ -9021,21 +9159,19 @@
 }).call(this);
 
 (function() {
-  var _ref,
-    __hasProp = {}.hasOwnProperty,
+  var __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
   Batman.PushStateNavigator = (function(_super) {
     __extends(PushStateNavigator, _super);
 
     function PushStateNavigator() {
-      _ref = PushStateNavigator.__super__.constructor.apply(this, arguments);
-      return _ref;
+      return PushStateNavigator.__super__.constructor.apply(this, arguments);
     }
 
     PushStateNavigator.isSupported = function() {
-      var _ref1;
-      return (typeof window !== "undefined" && window !== null ? (_ref1 = window.history) != null ? _ref1.pushState : void 0 : void 0) != null;
+      var _ref;
+      return (typeof window !== "undefined" && window !== null ? (_ref = window.history) != null ? _ref.pushState : void 0 : void 0) != null;
     };
 
     PushStateNavigator.prototype.startWatching = function() {
@@ -9087,8 +9223,7 @@
 }).call(this);
 
 (function() {
-  var _ref,
-    __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
+  var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
     __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
@@ -9098,8 +9233,7 @@
     function HashbangNavigator() {
       this.detectHashChange = __bind(this.detectHashChange, this);
       this.handleHashChange = __bind(this.handleHashChange, this);
-      _ref = HashbangNavigator.__super__.constructor.apply(this, arguments);
-      return _ref;
+      return HashbangNavigator.__super__.constructor.apply(this, arguments);
     }
 
     HashbangNavigator.prototype.hashPrefix = '#!';
@@ -9221,8 +9355,7 @@
     };
 
     RouteMap.prototype.addRoute = function(name, route) {
-      var base, names,
-        _this = this;
+      var base, names;
       this.childrenByOrder.push(route);
       if (name.length > 0 && (names = name.split('.')).length > 0) {
         base = names.shift();
@@ -9232,18 +9365,22 @@
         this.childrenByName[base].addRoute(names.join('.'), route);
       } else {
         if (route.get('member')) {
-          Batman.developer["do"](function() {
-            if (_this.memberRoute) {
-              return Batman.developer.error("Member route with name " + name + " already exists!");
-            }
-          });
+          Batman.developer["do"]((function(_this) {
+            return function() {
+              if (_this.memberRoute) {
+                return Batman.developer.error("Member route with name " + name + " already exists!");
+              }
+            };
+          })(this));
           this.memberRoute = route;
         } else {
-          Batman.developer["do"](function() {
-            if (_this.collectionRoute) {
-              return Batman.developer.error("Collection route with name " + name + " already exists!");
-            }
-          });
+          Batman.developer["do"]((function(_this) {
+            return function() {
+              if (_this.collectionRoute) {
+                return Batman.developer.error("Collection route with name " + name + " already exists!");
+              }
+            };
+          })(this));
           this.collectionRoute = route;
         }
       }
@@ -9550,24 +9687,25 @@
 }).call(this);
 
 (function() {
-  var _ref,
-    __hasProp = {}.hasOwnProperty,
+  var __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
   Batman.App = (function(_super) {
-    var name, _fn, _i, _len, _ref1,
-      _this = this;
+    var name, _fn, _i, _len, _ref;
 
     __extends(App, _super);
 
     function App() {
-      _ref = App.__super__.constructor.apply(this, arguments);
-      return _ref;
+      return App.__super__.constructor.apply(this, arguments);
     }
 
     App.classAccessor('currentParams', {
       get: function() {
-        return new Batman.Hash;
+        var nav;
+        if (!(nav = this.get('navigator'))) {
+          return;
+        }
+        return new Batman.Params({}, nav);
       },
       'final': true
     });
@@ -9620,15 +9758,15 @@
 
     App.shouldAllowEvent = {};
 
-    _ref1 = Batman.RouteMapBuilder.BUILDER_FUNCTIONS;
+    _ref = Batman.RouteMapBuilder.BUILDER_FUNCTIONS;
     _fn = function(name) {
       return App[name] = function() {
-        var _ref2;
-        return (_ref2 = this.get('routeMapBuilder'))[name].apply(_ref2, arguments);
+        var _ref1;
+        return (_ref1 = this.get('routeMapBuilder'))[name].apply(_ref1, arguments);
       };
     };
-    for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
-      name = _ref1[_i];
+    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+      name = _ref[_i];
       _fn(name);
     }
 
@@ -9637,8 +9775,7 @@
     App.event('run').oneShot = true;
 
     App.run = function() {
-      var LayoutView, layout, layoutClass, _ref2,
-        _this = this;
+      var LayoutView, layout, layoutClass;
       if (Batman.currentApp) {
         if (Batman.currentApp === this) {
           return;
@@ -9663,17 +9800,21 @@
       if (this.get('navigator') == null) {
         this.set('navigator', Batman.Navigator.forApp(this));
         Batman.navigator = this.get('navigator');
-        this.on('run', function() {
-          if (Object.keys(_this.get('dispatcher').routeMap).length > 0) {
-            return Batman.navigator.start();
-          }
-        });
+        this.on('run', (function(_this) {
+          return function() {
+            if (Object.keys(_this.get('dispatcher').routeMap).length > 0) {
+              return Batman.navigator.start();
+            }
+          };
+        })(this));
       }
-      this.observe('layout', function(layout) {
-        return layout != null ? layout.on('ready', function() {
-          return _this.fire('ready');
-        }) : void 0;
-      });
+      this.observe('layout', (function(_this) {
+        return function(layout) {
+          return layout != null ? layout.on('ready', function() {
+            return _this.fire('ready');
+          }) : void 0;
+        };
+      })(this));
       layout = this.get('layout');
       if (layout) {
         if (typeof layout === 'string') {
@@ -9685,8 +9826,7 @@
             __extends(LayoutView, _super1);
 
             function LayoutView() {
-              _ref2 = LayoutView.__super__.constructor.apply(this, arguments);
-              return _ref2;
+              return LayoutView.__super__.constructor.apply(this, arguments);
             }
 
             return LayoutView;
@@ -9716,9 +9856,9 @@
     App.event('stop').oneShot = true;
 
     App.stop = function() {
-      var _ref2;
-      if ((_ref2 = this.navigator) != null) {
-        _ref2.stop();
+      var _ref1;
+      if ((_ref1 = this.navigator) != null) {
+        _ref1.stop();
       }
       Batman.navigator = null;
       this.hasRun = false;
@@ -9728,7 +9868,7 @@
 
     return App;
 
-  }).call(this, Batman.Object);
+  })(Batman.Object);
 
 }).call(this);
 
@@ -9805,18 +9945,19 @@
     };
 
     Association.prototype.inverse = function() {
-      var inverse, relatedAssocs,
-        _this = this;
+      var inverse, relatedAssocs;
       if (relatedAssocs = this.getRelatedModel()._batman.get('associations')) {
         if (this.options.inverseOf) {
           return relatedAssocs.getByLabel(this.options.inverseOf);
         }
         inverse = null;
-        relatedAssocs.forEach(function(label, assoc) {
-          if (assoc.getRelatedModel() === _this.model) {
-            return inverse = assoc;
-          }
-        });
+        relatedAssocs.forEach((function(_this) {
+          return function(label, assoc) {
+            if (assoc.getRelatedModel() === _this.model) {
+              return inverse = assoc;
+            }
+          };
+        })(this));
         return inverse;
       }
     };
@@ -9849,26 +9990,27 @@
     }
 
     PluralAssociation.prototype.setForRecord = function(record) {
-      var childModelSetIndex, indexValue,
-        _this = this;
+      var childModelSetIndex, indexValue;
       indexValue = this.indexValueForRecord(record);
       childModelSetIndex = this.setIndex();
-      Batman.Property.withoutTracking(function() {
-        return _this._setsByRecord.getOrSet(record, function() {
-          var existingValueSet, newSet;
-          if (indexValue != null) {
-            existingValueSet = _this._setsByValue.get(indexValue);
-            if (existingValueSet != null) {
-              return existingValueSet;
+      Batman.Property.withoutTracking((function(_this) {
+        return function() {
+          return _this._setsByRecord.getOrSet(record, function() {
+            var existingValueSet, newSet;
+            if (indexValue != null) {
+              existingValueSet = _this._setsByValue.get(indexValue);
+              if (existingValueSet != null) {
+                return existingValueSet;
+              }
             }
-          }
-          newSet = _this.proxyClassInstanceForKey(indexValue);
-          if (indexValue != null) {
-            _this._setsByValue.set(indexValue, newSet);
-          }
-          return newSet;
-        });
-      });
+            newSet = _this.proxyClassInstanceForKey(indexValue);
+            if (indexValue != null) {
+              _this._setsByValue.set(indexValue, newSet);
+            }
+            return newSet;
+          });
+        };
+      })(this));
       if (indexValue != null) {
         return childModelSetIndex.get(indexValue);
       } else {
@@ -9877,24 +10019,27 @@
     };
 
     PluralAssociation.prototype.setForKey = Batman.Property.wrapTrackingPrevention(function(indexValue) {
-      var foundSet,
-        _this = this;
+      var foundSet;
       foundSet = void 0;
-      this._setsByRecord.forEach(function(record, set) {
-        if (foundSet != null) {
-          return;
-        }
-        if (_this.indexValueForRecord(record) === indexValue) {
-          return foundSet = set;
-        }
-      });
+      this._setsByRecord.forEach((function(_this) {
+        return function(record, set) {
+          if (foundSet != null) {
+            return;
+          }
+          if (_this.indexValueForRecord(record) === indexValue) {
+            return foundSet = set;
+          }
+        };
+      })(this));
       if (foundSet != null) {
         foundSet.foreignKeyValue = indexValue;
         return foundSet;
       }
-      return this._setsByValue.getOrSet(indexValue, function() {
-        return _this.proxyClassInstanceForKey(indexValue);
-      });
+      return this._setsByValue.getOrSet(indexValue, (function(_this) {
+        return function() {
+          return _this.proxyClassInstanceForKey(indexValue);
+        };
+      })(this));
     });
 
     PluralAssociation.prototype.proxyClassInstanceForKey = function(indexValue) {
@@ -9902,8 +10047,7 @@
     };
 
     PluralAssociation.prototype.getAccessor = function(self, model, label) {
-      var relatedRecords, setInAttributes,
-        _this = this;
+      var relatedRecords, setInAttributes;
       if (!self.getRelatedModel()) {
         return;
       }
@@ -9912,15 +10056,17 @@
       } else {
         relatedRecords = self.setForRecord(this);
         self.setIntoAttributes(this, relatedRecords);
-        Batman.Property.withoutTracking(function() {
-          if (self.options.autoload && !_this.isNew() && !relatedRecords.loaded) {
-            return relatedRecords.load(function(error, records) {
-              if (error) {
-                throw error;
-              }
-            });
-          }
-        });
+        Batman.Property.withoutTracking((function(_this) {
+          return function() {
+            if (self.options.autoload && !_this.isNew() && !relatedRecords.loaded) {
+              return relatedRecords.load(function(error, records) {
+                if (error) {
+                  throw error;
+                }
+              });
+            }
+          };
+        })(this));
         return relatedRecords;
       }
     };
@@ -9980,13 +10126,14 @@
     }
 
     HasManyAssociation.prototype.apply = function(baseSaveError, base) {
-      var relations, set,
-        _this = this;
+      var relations, set;
       if (!baseSaveError) {
         if (relations = this.getFromAttributes(base)) {
-          relations.forEach(function(model) {
-            return model.set(_this.foreignKey, base.get(_this.primaryKey));
-          });
+          relations.forEach((function(_this) {
+            return function(model) {
+              return model.set(_this.foreignKey, base.get(_this.primaryKey));
+            };
+          })(this));
         }
         base.set(this.label, set = this.setForRecord(base));
         if (base.lifecycle.get('state') === 'creating') {
@@ -10091,14 +10238,15 @@
     }
 
     PolymorphicHasManyAssociation.prototype.apply = function(baseSaveError, base) {
-      var relations,
-        _this = this;
+      var relations;
       if (!baseSaveError) {
         if (relations = this.getFromAttributes(base)) {
           PolymorphicHasManyAssociation.__super__.apply.apply(this, arguments);
-          relations.forEach(function(model) {
-            return model.set(_this.foreignTypeKey, _this.modelType());
-          });
+          relations.forEach((function(_this) {
+            return function(model) {
+              return model.set(_this.foreignTypeKey, _this.modelType());
+            };
+          })(this));
         }
       }
     };
@@ -10206,16 +10354,14 @@
 }).call(this);
 
 (function() {
-  var _ref,
-    __hasProp = {}.hasOwnProperty,
+  var __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
   Batman.SingularAssociation = (function(_super) {
     __extends(SingularAssociation, _super);
 
     function SingularAssociation() {
-      _ref = SingularAssociation.__super__.constructor.apply(this, arguments);
-      return _ref;
+      return SingularAssociation.__super__.constructor.apply(this, arguments);
     }
 
     SingularAssociation.prototype.isSingular = true;
@@ -10487,18 +10633,19 @@
     };
 
     PolymorphicBelongsToAssociation.prototype.inverseForType = function(type) {
-      var inverse, relatedAssocs, _ref,
-        _this = this;
+      var inverse, relatedAssocs, _ref;
       if (relatedAssocs = (_ref = this.getRelatedModelForType(type)) != null ? _ref._batman.get('associations') : void 0) {
         if (this.options.inverseOf) {
           return relatedAssocs.getByLabel(this.options.inverseOf);
         }
         inverse = null;
-        relatedAssocs.forEach(function(label, assoc) {
-          if (assoc.getRelatedModel() === _this.model) {
-            return inverse = assoc;
-          }
-        });
+        relatedAssocs.forEach((function(_this) {
+          return function(label, assoc) {
+            if (assoc.getRelatedModel() === _this.model) {
+              return inverse = assoc;
+            }
+          };
+        })(this));
         return inverse;
       }
     };
@@ -10566,28 +10713,33 @@
       return (_ref = typeof base.applyChanges === "function" ? base.applyChanges() : void 0) != null ? _ref : base;
     },
     save: function(options, callback) {
-      var finish, validated, _ref,
-        _this = this;
+      var finish, validated, _ref;
       if (!callback) {
         _ref = [{}, options], options = _ref[0], callback = _ref[1];
       }
-      this.once('validated', validated = function() {
-        return _this.applyChanges();
-      });
-      finish = function() {
-        _this.off('validated', validated);
-        return typeof callback === "function" ? callback.apply(null, arguments) : void 0;
-      };
-      return this.constructor.prototype.save.call(this, options, function(err, result) {
-        if (!err) {
-          result = _this.base();
-          result.get('dirtyKeys').clear();
-          result.get('_dirtiedKeys').clear();
-          result.get('lifecycle').startTransition('save');
-          result.get('lifecycle').startTransition('saved');
-        }
-        return finish(err, result);
-      });
+      this.once('validated', validated = (function(_this) {
+        return function() {
+          return _this.applyChanges();
+        };
+      })(this));
+      finish = (function(_this) {
+        return function() {
+          _this.off('validated', validated);
+          return typeof callback === "function" ? callback.apply(null, arguments) : void 0;
+        };
+      })(this);
+      return this.constructor.prototype.save.call(this, options, (function(_this) {
+        return function(err, result) {
+          if (!err) {
+            result = _this.base();
+            result.get('dirtyKeys').clear();
+            result.get('_dirtiedKeys').clear();
+            result.get('lifecycle').startTransition('save');
+            result.get('lifecycle').startTransition('saved');
+          }
+          return finish(err, result);
+        };
+      })(this));
     }
   };
 
@@ -10869,16 +11021,14 @@
 }).call(this);
 
 (function() {
-  var _ref,
-    __hasProp = {}.hasOwnProperty,
+  var __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
   Batman.PresenceValidator = (function(_super) {
     __extends(PresenceValidator, _super);
 
     function PresenceValidator() {
-      _ref = PresenceValidator.__super__.constructor.apply(this, arguments);
-      return _ref;
+      return PresenceValidator.__super__.constructor.apply(this, arguments);
     }
 
     PresenceValidator.triggers('presence');
@@ -10905,16 +11055,14 @@
 }).call(this);
 
 (function() {
-  var _ref,
-    __hasProp = {}.hasOwnProperty,
+  var __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
   Batman.NumericValidator = (function(_super) {
     __extends(NumericValidator, _super);
 
     function NumericValidator() {
-      _ref = NumericValidator.__super__.constructor.apply(this, arguments);
-      return _ref;
+      return NumericValidator.__super__.constructor.apply(this, arguments);
     }
 
     NumericValidator.triggers('numeric', 'greaterThan', 'greaterThanOrEqualTo', 'equalTo', 'lessThan', 'lessThanOrEqualTo', 'onlyInteger');
@@ -11103,16 +11251,14 @@
 }).call(this);
 
 (function() {
-  var _ref,
-    __hasProp = {}.hasOwnProperty,
+  var __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
   Batman.EmailValidator = (function(_super) {
     __extends(EmailValidator, _super);
 
     function EmailValidator() {
-      _ref = EmailValidator.__super__.constructor.apply(this, arguments);
-      return _ref;
+      return EmailValidator.__super__.constructor.apply(this, arguments);
     }
 
     EmailValidator.triggers('email');
@@ -11137,16 +11283,14 @@
 }).call(this);
 
 (function() {
-  var _ref,
-    __hasProp = {}.hasOwnProperty,
+  var __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
   Batman.ConfirmationValidator = (function(_super) {
     __extends(ConfirmationValidator, _super);
 
     function ConfirmationValidator() {
-      _ref = ConfirmationValidator.__super__.constructor.apply(this, arguments);
-      return _ref;
+      return ConfirmationValidator.__super__.constructor.apply(this, arguments);
     }
 
     ConfirmationValidator.triggers('confirmation');
@@ -11179,37 +11323,36 @@
 }).call(this);
 
 (function() {
-  var _ref,
-    __hasProp = {}.hasOwnProperty,
+  var __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
   Batman.AssociatedValidator = (function(_super) {
     __extends(AssociatedValidator, _super);
 
     function AssociatedValidator() {
-      _ref = AssociatedValidator.__super__.constructor.apply(this, arguments);
-      return _ref;
+      return AssociatedValidator.__super__.constructor.apply(this, arguments);
     }
 
     AssociatedValidator.triggers('associated');
 
     AssociatedValidator.prototype.validateEach = function(errors, record, key, callback) {
-      var childFinished, count, value,
-        _this = this;
+      var childFinished, count, value;
       value = record.get(key);
       if (value != null) {
         if (value instanceof Batman.AssociationProxy) {
           value = typeof value.get === "function" ? value.get('target') : void 0;
         }
         count = 1;
-        childFinished = function(err, childErrors) {
-          if (childErrors.length > 0) {
-            errors.add(key, _this.format(key, 'invalid_association', {}, record));
-          }
-          if (--count === 0) {
-            return callback();
-          }
-        };
+        childFinished = (function(_this) {
+          return function(err, childErrors) {
+            if (childErrors.length > 0) {
+              errors.add(key, _this.format(key, 'invalid_association', {}, record));
+            }
+            if (--count === 0) {
+              return callback();
+            }
+          };
+        })(this);
         if ((value != null ? value.forEach : void 0) != null) {
           value.forEach(function(record) {
             count += 1;
@@ -11234,39 +11377,38 @@
 }).call(this);
 
 (function() {
-  var _ref,
-    __hasProp = {}.hasOwnProperty,
+  var __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
   Batman.AssociatedFieldValidator = (function(_super) {
     __extends(AssociatedFieldValidator, _super);
 
     function AssociatedFieldValidator() {
-      _ref = AssociatedFieldValidator.__super__.constructor.apply(this, arguments);
-      return _ref;
+      return AssociatedFieldValidator.__super__.constructor.apply(this, arguments);
     }
 
     AssociatedFieldValidator.triggers('associatedFields');
 
     AssociatedFieldValidator.prototype.validateEach = function(errors, record, key, callback) {
-      var childFinished, count, value,
-        _this = this;
+      var childFinished, count, value;
       value = record.get(key);
       if (value != null) {
         if (value instanceof Batman.AssociationProxy) {
           value = typeof value.get === "function" ? value.get('target') : void 0;
         }
         count = 1;
-        childFinished = function(err, childErrors) {
-          if (childErrors != null) {
-            childErrors.forEach(function(validationError) {
-              return errors.add(validationError.get('attribute'), validationError.get('message'));
-            });
-          }
-          if (--count === 0) {
-            return callback();
-          }
-        };
+        childFinished = (function(_this) {
+          return function(err, childErrors) {
+            if (childErrors != null) {
+              childErrors.forEach(function(validationError) {
+                return errors.add(validationError.get('attribute'), validationError.get('message'));
+              });
+            }
+            if (--count === 0) {
+              return callback();
+            }
+          };
+        })(this);
         if ((value != null ? value.forEach : void 0) != null) {
           value.forEach(function(record) {
             count += 1;
@@ -11363,13 +11505,14 @@
     HTMLStore.prototype.propertyClass = Batman.Property;
 
     HTMLStore.prototype.fetchHTML = function(path) {
-      var _this = this;
       return new Batman.Request({
         url: Batman.Navigator.normalizePath(Batman.config.pathToHTML, "" + path + ".html"),
         type: 'html',
-        success: function(response) {
-          return _this.set(path, response);
-        },
+        success: (function(_this) {
+          return function(response) {
+            return _this.set(path, response);
+          };
+        })(this),
         error: function(response) {
           throw new Error("Could not load html from " + path);
         }
@@ -11502,24 +11645,27 @@
     View.prototype.isBackingView = false;
 
     function View() {
-      var superview,
-        _this = this;
+      var superview;
       this.bindings = [];
       this.subviews = new Batman.Set;
-      this.subviews.on('itemsWereAdded', function(newSubviews) {
-        var subview, _i, _len;
-        for (_i = 0, _len = newSubviews.length; _i < _len; _i++) {
-          subview = newSubviews[_i];
-          _this._addSubview(subview);
-        }
-      });
-      this.subviews.on('itemsWereRemoved', function(oldSubviews) {
-        var subview, _i, _len;
-        for (_i = 0, _len = oldSubviews.length; _i < _len; _i++) {
-          subview = oldSubviews[_i];
-          subview._removeFromSuperview();
-        }
-      });
+      this.subviews.on('itemsWereAdded', (function(_this) {
+        return function(newSubviews) {
+          var subview, _i, _len;
+          for (_i = 0, _len = newSubviews.length; _i < _len; _i++) {
+            subview = newSubviews[_i];
+            _this._addSubview(subview);
+          }
+        };
+      })(this));
+      this.subviews.on('itemsWereRemoved', (function(_this) {
+        return function(oldSubviews) {
+          var subview, _i, _len;
+          for (_i = 0, _len = oldSubviews.length; _i < _len; _i++) {
+            subview = oldSubviews[_i];
+            subview._removeFromSuperview();
+          }
+        };
+      })(this));
       View.__super__.constructor.apply(this, arguments);
       if (superview = this.superview) {
         this.superview = null;
@@ -11661,8 +11807,7 @@
 
     View.accessor('html', {
       get: function() {
-        var handler, property, source,
-          _this = this;
+        var handler, property, source;
         if (this.html != null) {
           return this.html;
         }
@@ -11673,12 +11818,14 @@
         this.html = this.constructor.store.get(source);
         if (this.html == null) {
           property = this.property('html');
-          handler = function(html) {
-            if (html != null) {
-              _this.set('html', html);
-            }
-            return property.removeHandler(handler);
-          };
+          handler = (function(_this) {
+            return function(html) {
+              if (html != null) {
+                _this.set('html', html);
+              }
+              return property.removeHandler(handler);
+            };
+          })(this);
           property.addHandler(handler);
         }
         return this.html;
@@ -11709,7 +11856,6 @@
         return this.node;
       },
       set: function(key, node, oldNode) {
-        var _this = this;
         if (oldNode) {
           Batman.removeData(oldNode, 'view', true);
         }
@@ -11723,11 +11869,13 @@
           return;
         }
         Batman._data(node, 'view', this);
-        Batman.developer["do"](function() {
-          var extraInfo, _base;
-          extraInfo = _this.get('displayName') || _this.get('source');
-          return typeof (_base = (node === document ? document.body : node)).setAttribute === "function" ? _base.setAttribute('batman-view', _this.constructor.name + (extraInfo ? ": " + extraInfo : '')) : void 0;
-        });
+        Batman.developer["do"]((function(_this) {
+          return function() {
+            var extraInfo, _base;
+            extraInfo = _this.get('displayName') || _this.get('source');
+            return typeof (_base = (node === document ? document.body : node)).setAttribute === "function" ? _base.setAttribute('batman-view', _this.constructor.name + (extraInfo ? ": " + extraInfo : '')) : void 0;
+          };
+        })(this));
         return node;
       }
     });
@@ -11924,8 +12072,7 @@
 }).call(this);
 
 (function() {
-  var _ref,
-    __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
+  var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
     __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
@@ -12177,8 +12324,7 @@
     __extends(BackingView, _super);
 
     function BackingView() {
-      _ref = BackingView.__super__.constructor.apply(this, arguments);
-      return _ref;
+      return BackingView.__super__.constructor.apply(this, arguments);
     }
 
     BackingView.prototype.isBackingView = true;
@@ -12268,16 +12414,17 @@
     ViewArgumentBinding.prototype.onlyObserve = Batman.BindingDefinitionOnlyObserve.Data;
 
     function ViewArgumentBinding(definition, option, targetView) {
-      var _this = this;
       this.option = option;
       this.targetView = targetView;
       ViewArgumentBinding.__super__.constructor.call(this, definition);
-      this.targetView.observe(this.option, this._updateValue = function(value) {
-        if (_this.isDataChanging) {
-          return;
-        }
-        return _this.view.setKeypath(_this.keyPath, value);
-      });
+      this.targetView.observe(this.option, this._updateValue = (function(_this) {
+        return function(value) {
+          if (_this.isDataChanging) {
+            return;
+          }
+          return _this.view.setKeypath(_this.keyPath, value);
+        };
+      })(this));
     }
 
     ViewArgumentBinding.prototype.dataChange = function(value) {
@@ -12372,8 +12519,7 @@
 }).call(this);
 
 (function() {
-  var _ref,
-    __hasProp = {}.hasOwnProperty,
+  var __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
     __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
 
@@ -12381,8 +12527,7 @@
     __extends(SelectView, _super);
 
     function SelectView() {
-      _ref = SelectView.__super__.constructor.apply(this, arguments);
-      return _ref;
+      return SelectView.__super__.constructor.apply(this, arguments);
     }
 
     SelectView.prototype._addChildBinding = function(binding) {
@@ -12424,13 +12569,14 @@
     };
 
     SelectBinding.prototype.childBindingAdded = function(binding) {
-      var _this = this;
       if (binding instanceof Batman.DOM.CheckedBinding) {
         binding.on('dataChange', this.nodeChange);
       } else if (binding instanceof Batman.DOM.IteratorBinding) {
-        binding.backingView.on('itemsWereRendered', function() {
-          return _this._fireDataChange(_this.get('filteredValue'));
-        });
+        binding.backingView.on('itemsWereRendered', (function(_this) {
+          return function() {
+            return _this._fireDataChange(_this.get('filteredValue'));
+          };
+        })(this));
       } else {
         return;
       }
@@ -12440,8 +12586,7 @@
     SelectBinding.prototype.lastKeyContext = null;
 
     SelectBinding.prototype.dataChange = function(newValue) {
-      var child, matches, valueToChild, _i, _len, _name, _ref1,
-        _this = this;
+      var child, matches, valueToChild, _i, _len, _name, _ref;
       this.lastKeyContext || (this.lastKeyContext = this.get('keyContext'));
       if (this.lastKeyContext !== this.get('keyContext')) {
         this.canSetImplicitly = true;
@@ -12449,22 +12594,24 @@
       }
       if (newValue != null ? newValue.forEach : void 0) {
         valueToChild = {};
-        _ref1 = this.node.children;
-        for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
-          child = _ref1[_i];
+        _ref = this.node.children;
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          child = _ref[_i];
           child.selected = false;
           matches = valueToChild[_name = child.value] || (valueToChild[_name] = []);
           matches.push(child);
         }
-        newValue.forEach(function(value) {
-          var children, node, _j, _len1;
-          if (children = valueToChild[value]) {
-            for (_j = 0, _len1 = children.length; _j < _len1; _j++) {
-              node = children[_j];
-              node.selected = true;
+        newValue.forEach((function(_this) {
+          return function(value) {
+            var children, node, _j, _len1;
+            if (children = valueToChild[value]) {
+              for (_j = 0, _len1 = children.length; _j < _len1; _j++) {
+                node = children[_j];
+                node.selected = true;
+              }
             }
-          }
-        });
+          };
+        })(this));
       } else {
         if ((newValue == null) && this.canSetImplicitly) {
           if (this.node.value) {
@@ -12493,10 +12640,10 @@
     };
 
     SelectBinding.prototype.updateOptionBindings = function() {
-      var binding, _i, _len, _ref1;
-      _ref1 = this.backingView.bindings;
-      for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
-        binding = _ref1[_i];
+      var binding, _i, _len, _ref;
+      _ref = this.backingView.bindings;
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        binding = _ref[_i];
         if (binding instanceof Batman.DOM.CheckedBinding) {
           binding._fireNodeChange();
         }
@@ -12504,22 +12651,23 @@
     };
 
     SelectBinding.prototype.fixSelectElementWidth = function() {
-      var _this = this;
       if (window.navigator.userAgent.toLowerCase().indexOf('msie') === -1) {
         return;
       }
       if (this._fixWidthTimeout) {
         clearTimeout(this._fixWidthTimeout);
       }
-      return this._fixWidthTimeout = setTimeout(function() {
-        _this._fixWidthTimeout = null;
-        return _this._fixSelectElementWidth();
-      }, 100);
+      return this._fixWidthTimeout = setTimeout((function(_this) {
+        return function() {
+          _this._fixWidthTimeout = null;
+          return _this._fixSelectElementWidth();
+        };
+      })(this), 100);
     };
 
     SelectBinding.prototype._fixSelectElementWidth = function() {
-      var previousWidth, style, _ref1;
-      style = (_ref1 = this.get('node')) != null ? _ref1.style : void 0;
+      var previousWidth, style, _ref;
+      style = (_ref = this.get('node')) != null ? _ref.style : void 0;
       if (!style) {
         return;
       }
@@ -12642,16 +12790,14 @@
 }).call(this);
 
 (function() {
-  var _ref,
-    __hasProp = {}.hasOwnProperty,
+  var __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
   Batman.DOM.RadioBinding = (function(_super) {
     __extends(RadioBinding, _super);
 
     function RadioBinding() {
-      _ref = RadioBinding.__super__.constructor.apply(this, arguments);
-      return _ref;
+      return RadioBinding.__super__.constructor.apply(this, arguments);
     }
 
     RadioBinding.accessor('parsedNodeValue', function() {
@@ -12717,16 +12863,14 @@
 }).call(this);
 
 (function() {
-  var _ref,
-    __hasProp = {}.hasOwnProperty,
+  var __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
   Batman.DeferredRenderView = (function(_super) {
     __extends(DeferredRenderView, _super);
 
     function DeferredRenderView() {
-      _ref = DeferredRenderView.__super__.constructor.apply(this, arguments);
-      return _ref;
+      return DeferredRenderView.__super__.constructor.apply(this, arguments);
     }
 
     DeferredRenderView.prototype.bindImmediately = false;
@@ -12832,12 +12976,13 @@
     ClickTrackingBinding.prototype.bindImmediately = false;
 
     function ClickTrackingBinding() {
-      var callback,
-        _this = this;
+      var callback;
       ClickTrackingBinding.__super__.constructor.apply(this, arguments);
-      callback = function() {
-        return Batman.Tracking.trackEvent('click', _this.get('filteredValue'), _this.node);
-      };
+      callback = (function(_this) {
+        return function() {
+          return Batman.Tracking.trackEvent('click', _this.get('filteredValue'), _this.node);
+        };
+      })(this);
       Batman.DOM.events.click(this.node, callback, this.view, 'click', false);
       this.bind();
     }
@@ -12874,18 +13019,19 @@
     EventBinding.prototype.bindImmediately = false;
 
     function EventBinding() {
-      var attacher, callback,
-        _this = this;
+      var attacher, callback;
       EventBinding.__super__.constructor.apply(this, arguments);
-      callback = function() {
-        var func, target;
-        func = _this.get('filteredValue');
-        target = _this.view.targetForKeypath(_this.functionPath || _this.unfilteredKey);
-        if (target && _this.functionPath) {
-          target = Batman.get(target, _this.functionPath);
-        }
-        return func != null ? func.apply(target, arguments) : void 0;
-      };
+      callback = (function(_this) {
+        return function() {
+          var func, target;
+          func = _this.get('filteredValue');
+          target = _this.view.targetForKeypath(_this.functionPath || _this.unfilteredKey);
+          if (target && _this.functionPath) {
+            target = Batman.get(target, _this.functionPath);
+          }
+          return func != null ? func.apply(target, arguments) : void 0;
+        };
+      })(this);
       if (attacher = Batman.DOM.events[this.attributeName]) {
         attacher(this.node, callback, this.view);
       } else {
@@ -12929,19 +13075,20 @@
     ContextBinding.prototype.bindingName = 'context';
 
     function ContextBinding(definition) {
-      var contextAttribute,
-        _this = this;
+      var contextAttribute;
       this.contextKeypath = definition.attr || 'proxiedObject';
       ContextBinding.__super__.constructor.apply(this, arguments);
       contextAttribute = this.attributeName ? "data-" + this.bindingName + "-" + this.attributeName : "data-" + this.bindingName;
       this.node.removeAttribute(contextAttribute);
       this.node.insertBefore(document.createComment("batman-" + contextAttribute + "=\"" + this.keyPath + "\""), this.node.firstChild);
-      this.backingView.observe(this.contextKeypath, this._updateValue = function(value) {
-        if (_this.isDataChanging) {
-          return;
-        }
-        return _this.view.setKeypath(_this.keyPath, value);
-      });
+      this.backingView.observe(this.contextKeypath, this._updateValue = (function(_this) {
+        return function(value) {
+          if (_this.isDataChanging) {
+            return;
+          }
+          return _this.view.setKeypath(_this.keyPath, value);
+        };
+      })(this));
     }
 
     ContextBinding.prototype.dataChange = function(proxiedObject) {
@@ -13032,16 +13179,14 @@
 }).call(this);
 
 (function() {
-  var _ref,
-    __hasProp = {}.hasOwnProperty,
+  var __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
   Batman.DOM.NodeAttributeBinding = (function(_super) {
     __extends(NodeAttributeBinding, _super);
 
     function NodeAttributeBinding() {
-      _ref = NodeAttributeBinding.__super__.constructor.apply(this, arguments);
-      return _ref;
+      return NodeAttributeBinding.__super__.constructor.apply(this, arguments);
     }
 
     NodeAttributeBinding.prototype.dataChange = function(value) {
@@ -13064,16 +13209,14 @@
 }).call(this);
 
 (function() {
-  var _ref,
-    __hasProp = {}.hasOwnProperty,
+  var __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
   Batman.DOM.CheckedBinding = (function(_super) {
     __extends(CheckedBinding, _super);
 
     function CheckedBinding() {
-      _ref = CheckedBinding.__super__.constructor.apply(this, arguments);
-      return _ref;
+      return CheckedBinding.__super__.constructor.apply(this, arguments);
     }
 
     CheckedBinding.prototype.isInputBinding = true;
@@ -13089,16 +13232,14 @@
 }).call(this);
 
 (function() {
-  var _ref,
-    __hasProp = {}.hasOwnProperty,
+  var __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
   Batman.DOM.AttributeBinding = (function(_super) {
     __extends(AttributeBinding, _super);
 
     function AttributeBinding() {
-      _ref = AttributeBinding.__super__.constructor.apply(this, arguments);
-      return _ref;
+      return AttributeBinding.__super__.constructor.apply(this, arguments);
     }
 
     AttributeBinding.prototype.onlyObserve = Batman.BindingDefinitionOnlyObserve.Data;
@@ -13178,16 +13319,14 @@
 }).call(this);
 
 (function() {
-  var _ref,
-    __hasProp = {}.hasOwnProperty,
+  var __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
   Batman.DOM.AbstractCollectionBinding = (function(_super) {
     __extends(AbstractCollectionBinding, _super);
 
     function AbstractCollectionBinding() {
-      _ref = AbstractCollectionBinding.__super__.constructor.apply(this, arguments);
-      return _ref;
+      return AbstractCollectionBinding.__super__.constructor.apply(this, arguments);
     }
 
     AbstractCollectionBinding.prototype.dataChange = function(collection) {
@@ -13207,7 +13346,7 @@
     };
 
     AbstractCollectionBinding.prototype.bindCollection = function(newCollection) {
-      var _ref1;
+      var _ref;
       if (newCollection instanceof Batman.Hash) {
         newCollection = newCollection.meta;
       }
@@ -13216,7 +13355,7 @@
       } else {
         this.unbindCollection();
         this.collection = newCollection;
-        if (!((_ref1 = this.collection) != null ? _ref1.isObservable : void 0)) {
+        if (!((_ref = this.collection) != null ? _ref.isObservable : void 0)) {
           return false;
         }
         if (this.collection.isCollectionEventEmitter && this.handleItemsAdded && this.handleItemsRemoved && this.handleItemMoved) {
@@ -13232,8 +13371,8 @@
     };
 
     AbstractCollectionBinding.prototype.unbindCollection = function() {
-      var _ref1;
-      if (!((_ref1 = this.collection) != null ? _ref1.isObservable : void 0)) {
+      var _ref;
+      if (!((_ref = this.collection) != null ? _ref.isObservable : void 0)) {
         return;
       }
       if (this.collection.isCollectionEventEmitter && this.handleItemsAdded && this.handleItemsRemoved && this.handleItemMoved) {
@@ -13310,10 +13449,11 @@
     };
 
     StyleBinding.prototype.handleArrayChanged = function(array) {
-      var _this = this;
-      return this.collection.forEach(function(key, value) {
-        return _this.bindSingleAttribute(key, "" + _this.keyPath + "." + key);
-      });
+      return this.collection.forEach((function(_this) {
+        return function(key, value) {
+          return _this.bindSingleAttribute(key, "" + _this.keyPath + "." + key);
+        };
+      })(this));
     };
 
     StyleBinding.prototype.bindSingleAttribute = function(attr, keyPath) {
@@ -13518,16 +13658,14 @@
 }).call(this);
 
 (function() {
-  var _ref, _ref1,
-    __hasProp = {}.hasOwnProperty,
+  var __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
   Batman.IteratorView = (function(_super) {
     __extends(IteratorView, _super);
 
     function IteratorView() {
-      _ref = IteratorView.__super__.constructor.apply(this, arguments);
-      return _ref;
+      return IteratorView.__super__.constructor.apply(this, arguments);
     }
 
     IteratorView.prototype.loadView = function() {
@@ -13565,11 +13703,11 @@
         for (_j = 0, _len1 = items.length; _j < _len1; _j++) {
           item = items[_j];
           _results1.push((function() {
-            var _k, _len2, _ref1, _results2;
-            _ref1 = this.subviews._storage;
+            var _k, _len2, _ref, _results2;
+            _ref = this.subviews._storage;
             _results2 = [];
-            for (_k = 0, _len2 = _ref1.length; _k < _len2; _k++) {
-              subview = _ref1[_k];
+            for (_k = 0, _len2 = _ref.length; _k < _len2; _k++) {
+              subview = _ref[_k];
               if (!(subview.get(this.attributeName) === item)) {
                 continue;
               }
@@ -13623,22 +13761,22 @@
     };
 
     IteratorView.prototype._finishAppendItems = function() {
-      var index, isInDOM, sibling, subview, _i, _j, _k, _len, _len1, _ref1, _ref2, _ref3, _ref4;
+      var index, isInDOM, sibling, subview, _i, _j, _k, _len, _len1, _ref, _ref1, _ref2, _ref3;
       isInDOM = Batman.DOM.containsNode(this.node);
       if (isInDOM) {
-        _ref1 = this.appendedViews;
-        for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
-          subview = _ref1[_i];
+        _ref = this.appendedViews;
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          subview = _ref[_i];
           subview.propagateToSubviews('viewWillAppear');
         }
       }
-      _ref2 = this.subviews.toArray();
-      for (index = _j = _ref2.length - 1; _j >= 0; index = _j += -1) {
-        subview = _ref2[index];
+      _ref1 = this.subviews.toArray();
+      for (index = _j = _ref1.length - 1; _j >= 0; index = _j += -1) {
+        subview = _ref1[index];
         if (!subview._targeted) {
           continue;
         }
-        if (sibling = (_ref3 = this.subviews.at(index + 1)) != null ? _ref3.get('node') : void 0) {
+        if (sibling = (_ref2 = this.subviews.at(index + 1)) != null ? _ref2.get('node') : void 0) {
           sibling.parentNode.insertBefore(subview.get('node'), sibling);
         } else {
           this.fragment.appendChild(subview.get('node'));
@@ -13648,9 +13786,9 @@
       this.node.parentNode.insertBefore(this.fragment, this.node);
       this.fire('itemsWereRendered');
       if (isInDOM) {
-        _ref4 = this.appendedViews;
-        for (_k = 0, _len1 = _ref4.length; _k < _len1; _k++) {
-          subview = _ref4[_k];
+        _ref3 = this.appendedViews;
+        for (_k = 0, _len1 = _ref3.length; _k < _len1; _k++) {
+          subview = _ref3[_k];
           subview.propagateToSubviews('isInDOM', isInDOM);
           subview.propagateToSubviews('viewDidAppear');
         }
@@ -13667,8 +13805,7 @@
     __extends(IterationView, _super);
 
     function IterationView() {
-      _ref1 = IterationView.__super__.constructor.apply(this, arguments);
-      return _ref1;
+      return IterationView.__super__.constructor.apply(this, arguments);
     }
 
     return IterationView;
@@ -13698,7 +13835,6 @@
       this.handleItemsRemoved = __bind(this.handleItemsRemoved, this);
       this.handleItemsAdded = __bind(this.handleItemsAdded, this);
       this.handleArrayChanged = __bind(this.handleArrayChanged, this);
-      var _this = this;
       this.iteratorName = definition.attr;
       this.prototypeNode = definition.node;
       this.prototypeNode.removeAttribute("data-foreach-" + this.iteratorName);
@@ -13711,18 +13847,20 @@
       IteratorBinding.__super__.constructor.apply(this, arguments);
       this.backingView.set('attributeName', this.attributeName);
       this.view.prevent('ready');
-      this._handle = Batman.setImmediate(function() {
-        var parentNode;
-        if (_this.backingView.isDead) {
-          Batman.developer.warn("IteratorBinding (data-foreach-" + _this.iteratorName + "='" + _this.keyPath + "') trying to insert dead backing view into DOM (" + _this.view.constructor.name + ")");
-          return;
-        }
-        parentNode = _this.prototypeNode.parentNode;
-        parentNode.insertBefore(_this.backingView.get('node'), _this.prototypeNode);
-        parentNode.removeChild(_this.prototypeNode);
-        _this.bind();
-        return _this.view.allowAndFire('ready');
-      });
+      this._handle = Batman.setImmediate((function(_this) {
+        return function() {
+          var parentNode;
+          if (_this.backingView.isDead) {
+            Batman.developer.warn("IteratorBinding (data-foreach-" + _this.iteratorName + "='" + _this.keyPath + "') trying to insert dead backing view into DOM (" + _this.view.constructor.name + ")");
+            return;
+          }
+          parentNode = _this.prototypeNode.parentNode;
+          parentNode.insertBefore(_this.backingView.get('node'), _this.prototypeNode);
+          parentNode.removeChild(_this.prototypeNode);
+          _this.bind();
+          return _this.view.allowAndFire('ready');
+        };
+      })(this));
     }
 
     IteratorBinding.prototype.handleArrayChanged = function(newItems) {
@@ -13772,16 +13910,14 @@
 }).call(this);
 
 (function() {
-  var _ref,
-    __hasProp = {}.hasOwnProperty,
+  var __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
   Batman.DOM.StyleAttributeBinding = (function(_super) {
     __extends(StyleAttributeBinding, _super);
 
     function StyleAttributeBinding() {
-      _ref = StyleAttributeBinding.__super__.constructor.apply(this, arguments);
-      return _ref;
+      return StyleAttributeBinding.__super__.constructor.apply(this, arguments);
     }
 
     StyleAttributeBinding.prototype.dataChange = function(value) {
@@ -15628,8 +15764,7 @@ if (window.ZEST_DEBUG) {
       }, {});
     },
     send: function(data) {
-      var options, xhr, _ref,
-        _this = this;
+      var options, xhr, _ref;
       if (data == null) {
         data = this.get('data');
       }
@@ -15639,28 +15774,34 @@ if (window.ZEST_DEBUG) {
         method: this.get('method'),
         type: this.get('type'),
         headers: this.get('headers'),
-        success: function(response) {
-          _this.mixin({
-            xhr: xhr,
-            response: response,
-            status: typeof xhr !== "undefined" && xhr !== null ? xhr.status : void 0,
-            responseHeaders: _this._parseResponseHeaders(xhr)
-          });
-          return _this.fire('success', response);
-        },
-        error: function(xhr) {
-          _this.mixin({
-            xhr: xhr,
-            response: xhr.responseText || xhr.content,
-            status: xhr.status,
-            responseHeaders: _this._parseResponseHeaders(xhr)
-          });
-          xhr.request = _this;
-          return _this.fire('error', xhr);
-        },
-        complete: function() {
-          return _this.fire('loaded');
-        }
+        success: (function(_this) {
+          return function(response) {
+            _this.mixin({
+              xhr: xhr,
+              response: response,
+              status: typeof xhr !== "undefined" && xhr !== null ? xhr.status : void 0,
+              responseHeaders: _this._parseResponseHeaders(xhr)
+            });
+            return _this.fire('success', response);
+          };
+        })(this),
+        error: (function(_this) {
+          return function(xhr) {
+            _this.mixin({
+              xhr: xhr,
+              response: xhr.responseText || xhr.content,
+              status: xhr.status,
+              responseHeaders: _this._parseResponseHeaders(xhr)
+            });
+            xhr.request = _this;
+            return _this.fire('error', xhr);
+          };
+        })(this),
+        complete: (function(_this) {
+          return function() {
+            return _this.fire('loaded');
+          };
+        })(this)
       };
       if ((_ref = options.method) === 'PUT' || _ref === 'POST') {
         if (this.hasFileUploads()) {

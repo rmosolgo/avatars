@@ -79,7 +79,7 @@
 
     Component.persist(BatFire.Storage);
 
-    Component.TYPES = ["Hair", "Eyes", "Nose", "Mouth", "Head", "Body"];
+    Component.TYPES = ["body", "head", "mouth", "nose", "eyes", "hair"];
 
     Component.encode('imageDataURI', 'name', 'description', 'type', 'defaultX', 'defaultY', 'defaultScale');
 
@@ -125,6 +125,14 @@
         };
       })(this);
       return reader.readAsDataURL(file);
+    };
+
+    Component.prototype.generateRaster = function(paperObj) {
+      var imageDataURI, raster, x, y, _ref;
+      imageDataURI = this.get('imageDataURI');
+      _ref = paperObj.view.center, x = _ref.x, y = _ref.y;
+      raster = new paperObj.Raster(imageDataURI, [this.get('defaultX') || x, this.get('defaultY') || y]);
+      return raster.scale(this.get('defaultScale') || 1);
     };
 
     return Component;
@@ -259,7 +267,13 @@
     AvatarsController.prototype.routingKey = "avatars";
 
     AvatarsController.prototype["new"] = function() {
-      return this.set('avatar', new App.Avatar);
+      this.render(false);
+      return App.Component.load((function(_this) {
+        return function() {
+          _this.set('avatar', new App.Avatar);
+          return _this.render();
+        };
+      })(this));
     };
 
     AvatarsController.prototype.index = function() {
@@ -284,10 +298,12 @@
 
     AvatarsController.prototype.edit = function(params) {
       this.render(false);
-      return App.Avatar.find(params.id, (function(_this) {
-        return function(err, record) {
-          _this.set('avatar', record);
-          return _this.render();
+      return App.Component.load((function(_this) {
+        return function() {
+          return App.Avatar.find(params.id, function(err, record) {
+            _this.set('avatar', record);
+            return _this.render();
+          });
         };
       })(this));
     };
@@ -336,7 +352,7 @@
       return AvatarCanvasView.__super__.constructor.apply(this, arguments);
     }
 
-    AvatarCanvasView.prototype.KEY_SENSITIVITY = 3;
+    AvatarCanvasView.prototype.KEY_SENSITIVITY = 1;
 
     AvatarCanvasView.prototype._checkForChanges = function() {
       $(window).on("beforeunload", this._beforeUnload = (function(_this) {
@@ -459,7 +475,7 @@
     AvatarCanvasView.prototype.zoomOut = function() {
       var _ref;
       if ((_ref = this.get('currentItem')) != null) {
-        _ref.scale(0.9);
+        _ref.scale(0.95);
       }
       return this.canvasWasChanged();
     };
@@ -467,7 +483,7 @@
     AvatarCanvasView.prototype.zoomIn = function() {
       var _ref;
       if ((_ref = this.get('currentItem')) != null) {
-        _ref.scale(1.1);
+        _ref.scale(1.05);
       }
       return this.canvasWasChanged();
     };
@@ -568,6 +584,7 @@
     __extends(AvatarsFormView, _super);
 
     function AvatarsFormView() {
+      var type, _i, _len, _ref;
       AvatarsFormView.__super__.constructor.apply(this, arguments);
       this.set('selectedComponentId', null);
       this.observe('selectedComponent', (function(_this) {
@@ -578,6 +595,15 @@
           }
         };
       })(this));
+      this._typeIds = {};
+      _ref = App.Component.TYPES;
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        type = _ref[_i];
+        this._typeIds[type] = {
+          current: 0,
+          ids: App.Component.get('loaded').indexedBy('type').get(type).sortedBy('name').mapToProperty('id')
+        };
+      }
     }
 
     AvatarsFormView.accessor('selectedComponent', function() {
@@ -594,38 +620,90 @@
       return this.controller.get('avatar').set('imageDataURI', this.canvas.toDataURL());
     };
 
+    AvatarsFormView.prototype.nextForType = function(type) {
+      var index, typeHash;
+      typeHash = this._typeIds[type];
+      index = ++typeHash.current;
+      if (index === typeHash.ids.length) {
+        index = typeHash.current = 0;
+      }
+      console.log(index, typeHash.current);
+      return this.replaceTypeFromIndex(type, index);
+    };
+
+    AvatarsFormView.prototype.prevForType = function(type) {
+      var index, typeHash;
+      typeHash = this._typeIds[type];
+      index = --typeHash.current;
+      if (index === -1) {
+        index = typeHash.current = typeHash.ids.length - 1;
+      }
+      console.log(index, typeHash.current);
+      return this.replaceTypeFromIndex(type, index);
+    };
+
+    AvatarsFormView.prototype.replaceTypeFromIndex = function(type, index) {
+      var component, componentId, feature, prevFeature, prevRaster, rasterIndex;
+      componentId = this._typeIds[type].ids[index];
+      component = App.Component.get('loaded').indexedByUnique('id').get(componentId);
+      prevFeature = this.controller.get('avatar').get(type);
+      prevRaster = prevFeature.get('raster');
+      rasterIndex = prevRaster.index;
+      prevRaster.remove();
+      this.controller.get('avatar').unset(type);
+      feature = this.addFeatureAsType(component, type, {
+        index: rasterIndex
+      });
+      return this.set('currentItem', feature.get('raster'));
+    };
+
+    AvatarsFormView.prototype.addFeatureAsType = function(component, type, options) {
+      var avatar, feature, raster;
+      if (options == null) {
+        options = {};
+      }
+      console.log("Adding " + (component != null ? component.get('name') : void 0) + " as " + type);
+      raster = component.generateRaster(paper);
+      if (options.index != null) {
+        paper.project.activeLayer.insertChild(options.index, raster);
+      }
+      avatar = this.controller.get('avatar');
+      feature = new App.Feature({
+        avatar: avatar,
+        name: component.get('name'),
+        type: component.get('type'),
+        imageDataURI: component.get('imageDataURI'),
+        x: raster.position.x,
+        y: raster.position.y,
+        scale: 1,
+        raster: raster,
+        index: raster.index
+      });
+      avatar.set(type, feature);
+      raster.feature = feature;
+      this.canvasWasChanged();
+      return feature;
+    };
+
     AvatarsFormView.prototype.addFeature = function(component) {
-      var feature, imageDataURI, index, name, raster, x, y, _ref;
-      imageDataURI = component.get('imageDataURI');
+      var feature, index, name, raster, type;
+      raster = component.generateRaster(paper);
       name = component.get('name');
-      _ref = paper.view.center, x = _ref.x, y = _ref.y;
-      raster = new paper.Raster(imageDataURI, [component.get('defaultX') || x, component.get('defaultY') || y]);
-      raster.scale(component.get('defaultScale') || 1);
+      type = component.get('type');
       index = raster.index;
       feature = this.controller.get('avatar.features').build({
         name: name,
-        imageDataURI: imageDataURI,
-        x: x,
-        y: y,
+        imageDataURI: component.get('imageDataURI'),
+        x: raster.position.x,
+        y: raster.position.y,
         scale: 1,
         raster: raster,
-        index: index
+        index: index,
+        type: type
       });
       raster.feature = feature;
       this.set('currentItem', raster);
       this.unset('selectedComponentId');
-      return this.canvasWasChanged();
-    };
-
-    AvatarsFormView.prototype.moveBy = function(x, y) {
-      var lastPostion, newPosition, _ref, _ref1;
-      if (!(lastPostion = (_ref = this.get('currentItem')) != null ? _ref.position : void 0)) {
-        return;
-      }
-      newPosition = [lastPostion.x + x, lastPostion.y + y];
-      if ((_ref1 = this.get('currentItem')) != null) {
-        _ref1.position = newPosition;
-      }
       return this.canvasWasChanged();
     };
 
@@ -680,12 +758,37 @@
     };
 
     AvatarsFormView.prototype.loadAvatar = function() {
-      var avatar;
+      var avatar, feature, type, _i, _len, _ref;
       avatar = this.controller.get('avatar');
-      return avatar.get('features.sortedBy.index').forEach(function(f) {
-        var raster;
-        return raster = f.generateRaster(paper);
-      });
+      if (avatar.get('features.length')) {
+        avatar.get('features.sortedBy.index').forEach(function(f) {
+          var raster;
+          console.log("adding feature " + (f.get('name')));
+          return raster = f.generateRaster(paper);
+        });
+      } else {
+        _ref = App.Component.TYPES;
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          type = _ref[_i];
+          if (feature = avatar.get("" + type + ".target")) {
+            feature.generateRaster(paper);
+          } else {
+            this.randomForType(type);
+          }
+        }
+      }
+      return this.set('wasChanged', false);
+    };
+
+    AvatarsFormView.prototype.randomForType = function(type) {
+      var component, componentId, feature, index, len, typeHash;
+      typeHash = this._typeIds[type];
+      len = typeHash.ids.length;
+      index = Math.floor(Math.random() * len);
+      typeHash.current = index;
+      componentId = typeHash.ids[index];
+      component = App.Component.get('loaded').indexedByUnique('id').get(componentId);
+      return feature = this.addFeatureAsType(component, type);
     };
 
     return AvatarsFormView;
@@ -731,9 +834,18 @@
     ComponentsEditView.prototype.saveComponent = function() {
       this.set('saveMessage', "Saving...");
       return this.controller.get('component').save((function(_this) {
-        return function() {
-          _this.unset('wasChanged');
-          return _this.unset('saveMessage');
+        return function(e, r) {
+          _this.unset('saveMessage');
+          if (e != null) {
+            if (!(e instanceof Batman.ErrorsSet)) {
+              throw e;
+            }
+          } else {
+            _this.unset('wasChanged');
+            return _this.controller.redirect({
+              action: "index"
+            });
+          }
         };
       })(this));
     };

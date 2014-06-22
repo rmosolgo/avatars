@@ -8,11 +8,11 @@ div(data-view='AvatarsFormView')
     .col-sm-4
       .form-group
         input.form-control(type='text' placeholder="Who is this?" data-bind='avatar.name')
-    .col-sm-4
-      .form-group
-        select.form-control(data-bind='selectedComponentId')
-          option Select a Component
-          option(data-foreach-component='Component.all' data-bind='component.name' data-bind-value='component.id')
+    //- .col-sm-4
+    //-   .form-group
+    //-     select.form-control(data-bind='selectedComponentId')
+    //-       option Select a Component
+    //-       option(data-foreach-component='Component.all' data-bind='component.name' data-bind-value='component.id')
   .row
     .col-sm-6
       .well.well-small
@@ -24,11 +24,21 @@ div(data-view='AvatarsFormView')
             span Active Feature:&nbsp;
             br
             small(data-bind='currentItem.feature.name')
+          p(data-showif='currentItem')
+            a(data-event-click='prevForType | withArguments currentItem.feature.type') Prev
+            a.pull-right(data-event-click='nextForType | withArguments currentItem.feature.type') Next
+
           .img-container(style='height:100px;')
             img(style='max-height:100px' data-bind-src='currentItem.feature.imageDataURI')
         .col-sm-6
           h4 Your Features:
           ul.list-unstyled
+            li(data-foreach-type='Component.TYPES' data-context-feature='avatar[type]')
+              strong(data-bind='type | capitalize | append ": "')
+              a(data-event-click='activateFeature | withArguments feature')
+                span(data-bind='feature.name')
+            li(data-showif='avatar.features.length')
+              strong Other Features
             li(data-foreach-feature='avatar.features.sortedByDescending.index')
               a(data-bind='feature.name' data-event-click='activateFeature | withArguments feature')
               a.text-danger.pull-right(data-event-click='removeFeature | withArguments feature') &times;
