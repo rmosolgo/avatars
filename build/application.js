@@ -50,6 +50,16 @@
       saveInline: true
     });
 
+    Avatar.hasOne('head', {
+      name: "Feature",
+      saveInline: true
+    });
+
+    Avatar.hasOne('body', {
+      name: "Feature",
+      saveInline: true
+    });
+
     Avatar.validate('name', {
       presence: true
     });
@@ -79,6 +89,17 @@
 
     Component.validate('name', {
       presence: true
+    });
+
+    Component.validate('type', {
+      presence: true
+    });
+
+    Component.validate('defaultX', function(errors, record, attribute, callback) {
+      if (!(record.get('defaultX') && record.get('defaultY'))) {
+        errors.add("base", "You must provide a default position!");
+      }
+      return callback();
     });
 
     function Component() {
@@ -121,7 +142,7 @@
 
     Feature.persist(BatFire.Storage);
 
-    Feature.encode('name', 'imageDataURI', 'x', 'y', 'scale', 'rotation', 'index');
+    Feature.encode('name', 'imageDataURI', 'x', 'y', 'scale', 'rotation', 'index', 'type');
 
     Feature.belongsTo('avatar', {
       inverseOf: 'features'
@@ -173,6 +194,9 @@
     };
 
     ApplicationController.prototype.destroy = function(obj, callback) {
+      if (!comfirm("Are you sure you want to delete this item?")) {
+        return;
+      }
       return obj.destroy((function(_this) {
         return function(err, record) {
           if (err != null) {
@@ -339,6 +363,7 @@
 
     AvatarCanvasView.prototype.viewWillDisappear = function() {
       console.log("restoring Batman.redirect");
+      $(window).off("beforeunload", this._beforeUnload);
       return Batman.redirect = this._oldRedirect;
     };
 
@@ -725,6 +750,6 @@ Batman.View.store.set('/avatars/form', '<div data-view=\"AvatarsFormView\"><div 
 Batman.View.store.set('/avatars/index', '<div class=\"row\"><div data-foreach-avatar=\"avatars\" class=\"col-sm-3\"><div class=\"thumbnail\"><div style=\"height:200px;width:100%\" class=\"img-container\"><img style=\"max-height:100%; max-width:100%\" data-bind-src=\"avatar.imageDataURI\"/></div><div class=\"caption\"><p data-bind=\"avatar.name\"></p><p><a data-event-click=\"destroy | withArguments avatar\" class=\"btn btn-danger\">Delete</a><a data-route=\"routes.avatars[avatar].edit\" class=\"btn btn-primary\">Edit</a></p></div></div></div></div>');
 Batman.View.store.set('/avatars/new', '<div data-partial=\"avatars/form\"></div>');
 Batman.View.store.set('/components/edit', '<div data-partial=\"components/form\"></div>');
-Batman.View.store.set('/components/form', '<form data-formfor-c=\"component\" data-event-submit=\"saveComponent\"><div class=\"row\"><div data-showif=\"c.errors.length\" class=\"alert alert-danger\"><ul class=\"list-unstyled\"><li data-foreach-error=\"c.errors\" data-bind=\"error.fullMessage\"></li></ul></div></div><div class=\"row\"><div class=\"col-xs-6\"><div class=\"well\"><div style=\"height:200px;width:100%\" class=\"img-container\"><p data-showif=\"c.imageDataURI | not\">Upload an image to see a preview!</p><img style=\"max-height:100%; max-width:100%\" data-bind-src=\"c.imageDataURI\"/></div></div></div><div class=\"col-xs-6\"><div class=\"well well-small\"><canvas id=\"new-avatar\" style=\"height:300px; width:300px; border: 1px solid black; cursor:pointer;\"></canvas></div></div></div><div class=\"row\"><div class=\"form-group col-xs-6\"><label>Name</label><input type=\"text\" data-bind=\"c.name\" placeholder=\"name\" class=\"form-control\"/></div><div class=\"form-group col-xs-6\"><a data-event-click=\"executeAction | withArguments &quot;keyboardShortcuts&quot;\" class=\"btn btn-info\">Keyboard Shortcuts</a><br/><label>Default Position:</label><div class=\"row\"><div class=\"col-xs-3\"><input type=\"text\" disabled=\"true\" data-bind=\"component.defaultX\" class=\"form-control\"/></div><div class=\"col-xs-3\"><input type=\"text\" disabled=\"true\" data-bind=\"component.defaultY\" class=\"form-control\"/></div><div class=\"col-xs-3\"><input type=\"text\" disabled=\"true\" data-bind=\"component.defaultScale\" class=\"form-control\"/></div></div></div></div><div class=\"row\"><div class=\"form-group col-xs-6\"><label>Type</label><select data-bind=\"component.type\" class=\"form-control\"><option data-foreach-t=\"Component.TYPES\" data-bind=\"t\" data-bind-value=\"t\"></option></select></div><div class=\"form-group col-xs-6\"><label>File</label><input type=\"file\" data-bind=\"c.imageFile\" class=\"form-control\"/></div></div><div class=\"row\"><div class=\"form-group col-xs-6\"><label>Description</label><textarea data-bind=\"c.description\" placeholder=\"description\" class=\"form-control\"></textarea></div></div><div class=\"row\"><div class=\"form-group\"><div class=\"row\"><div class=\"col-xs-4\"><input data-addclass-btn-warning=\"wasChanged\" type=\"submit\" data-bind-value=\"saveMessage | default &quot;Save Component&quot;\" class=\"btn btn-primary\"/></div><div class=\"col-xs-4\"><a data-event-click=\"destroy | withArguments component\" data-showif=\"component.isNew | not\" class=\"btn btn-danger\">Delete</a></div></div></div></div></form>');
+Batman.View.store.set('/components/form', '<form data-formfor-c=\"component\" data-event-submit=\"saveComponent\"><div class=\"row\"><div data-showif=\"c.errors.length\" class=\"alert alert-danger\"><ul class=\"list-unstyled\"><li data-foreach-error=\"c.errors\" data-bind=\"error.fullMessage\"></li></ul></div></div><div class=\"row\"><div class=\"col-xs-6\"><div class=\"well\"><div style=\"height:200px;width:100%\" class=\"img-container\"><p data-showif=\"c.imageDataURI | not\">Upload an image to see a preview!</p><img style=\"max-height:100%; max-width:100%\" data-bind-src=\"c.imageDataURI\"/></div></div></div><div class=\"col-xs-6\"><div class=\"well well-small\"><canvas id=\"new-avatar\" style=\"height:300px; width:300px; border: 1px solid black; cursor:pointer;\"></canvas></div></div></div><div class=\"row\"><div class=\"form-group col-xs-6\"><label>Name</label><input type=\"text\" data-bind=\"c.name\" placeholder=\"name\" class=\"form-control\"/></div><div class=\"form-group col-xs-6\"><a data-event-click=\"executeAction | withArguments &quot;keyboardShortcuts&quot;\" class=\"btn btn-info\">Keyboard Shortcuts</a><br/><label>Default Position:</label><div class=\"row\"><div class=\"col-xs-3\"><input type=\"text\" disabled=\"true\" data-bind=\"component.defaultX\" class=\"form-control\"/></div><div class=\"col-xs-3\"><input type=\"text\" disabled=\"true\" data-bind=\"component.defaultY\" class=\"form-control\"/></div><div class=\"col-xs-3\"><input type=\"text\" disabled=\"true\" data-bind=\"component.defaultScale\" class=\"form-control\"/></div></div></div></div><div class=\"row\"><div class=\"form-group col-xs-6\"><label>Type</label><select data-bind=\"component.type\" class=\"form-control\"><option data-foreach-t=\"Component.TYPES\" data-bind=\"t\" data-bind-value=\"t\"></option></select></div><div class=\"form-group col-xs-6\"><label>File</label><input type=\"file\" data-bind=\"c.imageFile\" class=\"form-control\"/></div></div><div class=\"row\"><div class=\"form-group col-xs-6\"><label>Description</label><textarea data-bind=\"c.description\" placeholder=\"description\" class=\"form-control\"></textarea></div></div><div class=\"row\"><div class=\"form-group\"><div class=\"row\"><div class=\"col-xs-4\"><input data-addclass-btn-warning=\"wasChanged | or c.isDirty\" type=\"submit\" data-bind-value=\"saveMessage | default &quot;Save Component&quot;\" class=\"btn btn-primary\"/></div><div class=\"col-xs-4\"><a data-event-click=\"destroy | withArguments component\" data-showif=\"component.isNew | not\" class=\"btn btn-danger\">Delete</a></div></div></div></div></form>');
 Batman.View.store.set('/components/index', '<div class=\"row\"><div class=\"col-sm-6\"><h1 class=\"page-header\">Components</h1></div></div><div class=\"row\"><div class=\"col-sm-3 col-sm-offset-9\"><a data-route=\"routes.components.new\" class=\"btn btn-primary\">New Component</a></div></div><div data-foreach-group=\"componentGroups\" class=\"row\"><div data-foreach-component=\"group\" class=\"col-sm-3\"><div class=\"thumbnail\"><div style=\"height:200px;width:100%\" class=\"img-container\"><img style=\"max-height:100%; max-width:100%\" data-bind-src=\"component.imageDataURI\"/></div><div class=\"caption\"><p data-bind=\"component.name\"></p><a data-route=\"routes.components[component].edit\" class=\"btn btn-primary\">Edit</a><a data-event-click=\"destroy | withArguments component\" class=\"btn btn-danger\">Destroy</a></div></div></div></div>');
 Batman.View.store.set('/components/new', '<div data-partial=\"components/form\"></div>');

@@ -6,6 +6,11 @@ class App.Component extends Batman.Model
     'defaultX', 'defaultY', 'defaultScale'
   @validate 'imageDataURI', presence: true
   @validate 'name', presence: true
+  @validate 'type', presence: true
+  @validate 'defaultX', (errors, record, attribute, callback) ->
+    if !(record.get('defaultX') and record.get('defaultY'))
+      errors.add("base", "You must provide a default position!")
+    callback()
 
   constructor: ->
     super

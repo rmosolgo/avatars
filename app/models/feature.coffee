@@ -1,7 +1,9 @@
 class App.Feature extends Batman.Model
   @resourceName: 'feature'
   @persist BatFire.Storage
-  @encode 'name', 'imageDataURI', 'x', 'y', 'scale', 'rotation', 'index'
+  @encode 'name', 'imageDataURI',
+    'x', 'y', 'scale', 'rotation', 'index',
+    'type'
   @belongsTo 'avatar', inverseOf: 'features'
 
   updateFromRaster: ->

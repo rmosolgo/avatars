@@ -44,6 +44,6 @@ form(data-formfor-c='component' data-event-submit='saveComponent')
     .form-group
       .row
         .col-xs-4
-          input.btn.btn-primary(data-addclass-btn-warning='wasChanged' type='submit' data-bind-value='saveMessage | default "Save Component"')
+          input.btn.btn-primary(data-addclass-btn-warning='wasChanged | or c.isDirty' type='submit' data-bind-value='saveMessage | default "Save Component"')
         .col-xs-4
           a.btn.btn-danger(data-event-click='destroy | withArguments component', data-showif='component.isNew | not') Delete

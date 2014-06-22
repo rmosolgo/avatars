@@ -50,6 +50,16 @@
       saveInline: true
     });
 
+    Avatar.hasOne('head', {
+      name: "Feature",
+      saveInline: true
+    });
+
+    Avatar.hasOne('body', {
+      name: "Feature",
+      saveInline: true
+    });
+
     Avatar.validate('name', {
       presence: true
     });
@@ -79,6 +89,17 @@
 
     Component.validate('name', {
       presence: true
+    });
+
+    Component.validate('type', {
+      presence: true
+    });
+
+    Component.validate('defaultX', function(errors, record, attribute, callback) {
+      if (!(record.get('defaultX') && record.get('defaultY'))) {
+        errors.add("base", "You must provide a default position!");
+      }
+      return callback();
     });
 
     function Component() {
@@ -121,7 +142,7 @@
 
     Feature.persist(BatFire.Storage);
 
-    Feature.encode('name', 'imageDataURI', 'x', 'y', 'scale', 'rotation', 'index');
+    Feature.encode('name', 'imageDataURI', 'x', 'y', 'scale', 'rotation', 'index', 'type');
 
     Feature.belongsTo('avatar', {
       inverseOf: 'features'
@@ -173,6 +194,9 @@
     };
 
     ApplicationController.prototype.destroy = function(obj, callback) {
+      if (!comfirm("Are you sure you want to delete this item?")) {
+        return;
+      }
       return obj.destroy((function(_this) {
         return function(err, record) {
           if (err != null) {
@@ -339,6 +363,7 @@
 
     AvatarCanvasView.prototype.viewWillDisappear = function() {
       console.log("restoring Batman.redirect");
+      $(window).off("beforeunload", this._beforeUnload);
       return Batman.redirect = this._oldRedirect;
     };
 
