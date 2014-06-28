@@ -23,6 +23,9 @@ class App.AvatarsFormView extends App.AvatarCanvasView
 
   canvasWasChanged: ->
     super
+    @_updateAvatar()
+
+  _updateAvatar: ->
     @controller.get('avatar').set('imageDataURI', @canvas.toDataURL())
 
   nextForType: (type) ->
@@ -55,44 +58,29 @@ class App.AvatarsFormView extends App.AvatarCanvasView
     @set('currentItem', feature.get('raster'))
 
   addFeatureAsType: (component, type, options={}) ->
-    console.log "Adding #{component?.get('name')} as #{type}"
     raster = component.generateRaster(paper)
     if options.index?
       paper.project.activeLayer.insertChild(options.index, raster)
+    feature = @_addFeature(component)
     avatar = @controller.get('avatar')
-    feature = new App.Feature({
-      avatar
-      name: component.get('name')
-      type: component.get('type')
-      imageDataURI: component.get('imageDataURI')
-      x: raster.position.x,
-      y: raster.position.y,
-      scale: 1,
-      raster,
-      index: raster.index
-    })
     avatar.set(type, feature)
-    raster.feature = feature
-    @canvasWasChanged()
     feature
 
-  addFeature: (component) ->
+  _addFeature: (component) ->
     raster = component.generateRaster(paper)
-    name = component.get('name')
-    type = component.get('type')
+    avatar = @controller.get('avatar')
     index = raster.index
-    feature = @controller.get('avatar.features').build({
-      name,
-      imageDataURI: component.get('imageDataURI')
-      x: raster.position.x,
-      y: raster.position.y,
-      scale: 1,
-      raster, index, type
-      })
+    feature = App.Feature.fromComponent(component)
+    feature.updateAttributes({raster, index, avatar})
     raster.feature = feature
     @set('currentItem', raster)
-    @unset('selectedComponentId')
     @canvasWasChanged()
+
+  addFeature: (component) ->
+    feature = @_addFeature(component)
+    @controller.get('avatar.features').add(feature)
+    @unset('selectedComponentId')
+    feature
 
   activateFeature: (feature) ->
     @set('currentItem', feature.get('raster'))
@@ -132,22 +120,15 @@ class App.AvatarsFormView extends App.AvatarCanvasView
     if avatar.get('features.length')
       # extra features:
       avatar.get('features.sortedBy.index').forEach (f) ->
-        console.log "adding feature #{f.get('name')}"
         raster = f.generateRaster(paper)
     else
       for type in App.Component.TYPES
-        if feature = avatar.get("#{type}.target")
+        feature = avatar.get("#{type}")
+        if feature.isProxy
+          feature = feature.get('target')
+        if feature?
           feature.generateRaster(paper)
-        else # default
-          @randomForType(type)
+    @canvasWasChanged()
     @set('wasChanged', false)
 
 
-  randomForType: (type) ->
-    typeHash = @_typeIds[type]
-    len = typeHash.ids.length
-    index = Math.floor(Math.random() * len)
-    typeHash.current = index
-    componentId = typeHash.ids[index]
-    component = App.Component.get('loaded').indexedByUnique('id').get(componentId)
-    feature = @addFeatureAsType(component, type)

@@ -8,12 +8,14 @@ class App.ApplicationController extends Batman.Controller
         callback?(err, record)
 
   destroy: (obj, callback) ->
-    return unless comfirm("Are you sure you want to delete this item?")
+    return unless confirm("Are you sure you want to delete this #{Batman.helpers.singularize(Batman.helpers.humanize(@get('routingKey')))}?")
+    if !(typeof callback is "function")
+      callback = => @redirect({action: "index"})
     obj.destroy (err, record) =>
       if err?
         throw err
       else
-        callback?(err, record)
+        callback(err, record)
 
   dialog: (renderOptions={}) ->
     opts = Batman.extend({into: "modal"}, renderOptions)

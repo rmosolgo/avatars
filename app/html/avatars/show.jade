@@ -1,0 +1,10 @@
+.row
+  .col-sm-3
+    .thumbnail
+      .img-container(style="height:200px;width:100%")
+        img(style='max-height:100%; max-width:100%' data-bind-src='avatar.imageDataURI')
+      .caption
+        p(data-bind='avatar.name')
+        p
+          a.btn.btn-danger(data-event-click='destroy | withArguments avatar') Delete
+          a.btn.btn-primary(data-route='routes.avatars[avatar].edit') Edit

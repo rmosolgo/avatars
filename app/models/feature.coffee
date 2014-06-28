@@ -25,3 +25,13 @@ class App.Feature extends Batman.Model
     raster.feature = @
     raster
 
+  @fromComponent: (component) ->
+    {imageDataURI, name, type, defaultScale, defaultX, defaultY} = component.toJSON()
+    feature = new @({
+      imageDataURI, name, type,
+      scale: defaultScale,
+      x: defaultX,
+      y: defaultY
+      })
+
+

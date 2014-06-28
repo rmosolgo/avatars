@@ -50,12 +50,32 @@
       saveInline: true
     });
 
+    Avatar.hasOne('body', {
+      name: "Feature",
+      saveInline: true
+    });
+
     Avatar.hasOne('head', {
       name: "Feature",
       saveInline: true
     });
 
-    Avatar.hasOne('body', {
+    Avatar.hasOne('mouth', {
+      name: "Feature",
+      saveInline: true
+    });
+
+    Avatar.hasOne('nose', {
+      name: "Feature",
+      saveInline: true
+    });
+
+    Avatar.hasOne('eyes', {
+      name: "Feature",
+      saveInline: true
+    });
+
+    Avatar.hasOne('hair', {
       name: "Feature",
       saveInline: true
     });
@@ -67,6 +87,21 @@
     Avatar.validate('imageDataURI', {
       presence: true
     });
+
+    Avatar.belongsToCurrentUser();
+
+    Avatar.makeTemplate = function() {
+      var avatar, component, feature, type, _i, _len, _ref;
+      avatar = new this;
+      _ref = App.Component.TYPES;
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        type = _ref[_i];
+        component = App.Component.get('all.indexedBy.type').get(type).get('first');
+        feature = App.Feature.fromComponent(component);
+        avatar.set(type, feature);
+      }
+      return avatar;
+    };
 
     return Avatar;
 
@@ -176,6 +211,19 @@
       return raster;
     };
 
+    Feature.fromComponent = function(component) {
+      var defaultScale, defaultX, defaultY, feature, imageDataURI, name, type, _ref;
+      _ref = component.toJSON(), imageDataURI = _ref.imageDataURI, name = _ref.name, type = _ref.type, defaultScale = _ref.defaultScale, defaultX = _ref.defaultX, defaultY = _ref.defaultY;
+      return feature = new this({
+        imageDataURI: imageDataURI,
+        name: name,
+        type: type,
+        scale: defaultScale,
+        x: defaultX,
+        y: defaultY
+      });
+    };
+
     return Feature;
 
   })(Batman.Model);
@@ -202,15 +250,24 @@
     };
 
     ApplicationController.prototype.destroy = function(obj, callback) {
-      if (!comfirm("Are you sure you want to delete this item?")) {
+      if (!confirm("Are you sure you want to delete this " + (Batman.helpers.singularize(Batman.helpers.humanize(this.get('routingKey')))) + "?")) {
         return;
+      }
+      if (!(typeof callback === "function")) {
+        callback = (function(_this) {
+          return function() {
+            return _this.redirect({
+              action: "index"
+            });
+          };
+        })(this);
       }
       return obj.destroy((function(_this) {
         return function(err, record) {
           if (err != null) {
             throw err;
           } else {
-            return typeof callback === "function" ? callback(err, record) : void 0;
+            return callback(err, record);
           }
         };
       })(this));
@@ -270,7 +327,7 @@
       this.render(false);
       return App.Component.load((function(_this) {
         return function() {
-          _this.set('avatar', new App.Avatar);
+          _this.set('avatar', App.Avatar.makeTemplate());
           return _this.render();
         };
       })(this));
@@ -304,6 +361,16 @@
             _this.set('avatar', record);
             return _this.render();
           });
+        };
+      })(this));
+    };
+
+    AvatarsController.prototype.show = function(params) {
+      this.render(false);
+      return App.Avatar.find(params.id, (function(_this) {
+        return function(err, record) {
+          _this.set('avatar', record);
+          return _this.render();
         };
       })(this));
     };
@@ -617,6 +684,10 @@
 
     AvatarsFormView.prototype.canvasWasChanged = function() {
       AvatarsFormView.__super__.canvasWasChanged.apply(this, arguments);
+      return this._updateAvatar();
+    };
+
+    AvatarsFormView.prototype._updateAvatar = function() {
       return this.controller.get('avatar').set('imageDataURI', this.canvas.toDataURL());
     };
 
@@ -662,49 +733,38 @@
       if (options == null) {
         options = {};
       }
-      console.log("Adding " + (component != null ? component.get('name') : void 0) + " as " + type);
       raster = component.generateRaster(paper);
       if (options.index != null) {
         paper.project.activeLayer.insertChild(options.index, raster);
       }
+      feature = this._addFeature(component);
       avatar = this.controller.get('avatar');
-      feature = new App.Feature({
-        avatar: avatar,
-        name: component.get('name'),
-        type: component.get('type'),
-        imageDataURI: component.get('imageDataURI'),
-        x: raster.position.x,
-        y: raster.position.y,
-        scale: 1,
-        raster: raster,
-        index: raster.index
-      });
       avatar.set(type, feature);
-      raster.feature = feature;
-      this.canvasWasChanged();
       return feature;
     };
 
-    AvatarsFormView.prototype.addFeature = function(component) {
-      var feature, index, name, raster, type;
+    AvatarsFormView.prototype._addFeature = function(component) {
+      var avatar, feature, index, raster;
       raster = component.generateRaster(paper);
-      name = component.get('name');
-      type = component.get('type');
+      avatar = this.controller.get('avatar');
       index = raster.index;
-      feature = this.controller.get('avatar.features').build({
-        name: name,
-        imageDataURI: component.get('imageDataURI'),
-        x: raster.position.x,
-        y: raster.position.y,
-        scale: 1,
+      feature = App.Feature.fromComponent(component);
+      feature.updateAttributes({
         raster: raster,
         index: index,
-        type: type
+        avatar: avatar
       });
       raster.feature = feature;
       this.set('currentItem', raster);
-      this.unset('selectedComponentId');
       return this.canvasWasChanged();
+    };
+
+    AvatarsFormView.prototype.addFeature = function(component) {
+      var feature;
+      feature = this._addFeature(component);
+      this.controller.get('avatar.features').add(feature);
+      this.unset('selectedComponentId');
+      return feature;
     };
 
     AvatarsFormView.prototype.activateFeature = function(feature) {
@@ -763,32 +823,23 @@
       if (avatar.get('features.length')) {
         avatar.get('features.sortedBy.index').forEach(function(f) {
           var raster;
-          console.log("adding feature " + (f.get('name')));
           return raster = f.generateRaster(paper);
         });
       } else {
         _ref = App.Component.TYPES;
         for (_i = 0, _len = _ref.length; _i < _len; _i++) {
           type = _ref[_i];
-          if (feature = avatar.get("" + type + ".target")) {
+          feature = avatar.get("" + type);
+          if (feature.isProxy) {
+            feature = feature.get('target');
+          }
+          if (feature != null) {
             feature.generateRaster(paper);
-          } else {
-            this.randomForType(type);
           }
         }
       }
+      this.canvasWasChanged();
       return this.set('wasChanged', false);
-    };
-
-    AvatarsFormView.prototype.randomForType = function(type) {
-      var component, componentId, feature, index, len, typeHash;
-      typeHash = this._typeIds[type];
-      len = typeHash.ids.length;
-      index = Math.floor(Math.random() * len);
-      typeHash.current = index;
-      componentId = typeHash.ids[index];
-      component = App.Component.get('loaded').indexedByUnique('id').get(componentId);
-      return feature = this.addFeatureAsType(component, type);
     };
 
     return AvatarsFormView;
@@ -859,8 +910,9 @@
 Batman.View.store.set('/keyboard_shortcuts', '<div class=\"modal-body\"><ul class=\"list-unstyled\"><li>Up</li><li>Down</li><li>Left</li><li>Right</li><li>Backspace: delete</li><li>< Rotate Left</li><li>> Rotate right</li><li>+ Zoom In</li><li>- Zoom Out</li></ul></div><div class=\"modal-footer\"><button type=\"button\" data-event-click=\"closeDialog\" class=\"btn btn-default btn btn-default\">Close</button></div>');
 Batman.View.store.set('/avatars/edit', '<div data-partial=\"avatars/form\"></div>');
 Batman.View.store.set('/avatars/form', '<div data-view=\"AvatarsFormView\"><div class=\"row\"><div class=\"col-sm-12\"><ul data-showif=\"avatar.errors.length\" class=\"list-unstyled alert alert-warning\"><li data-foreach-e=\"avatar.errors\" data-bind=\"e.fullMessage\"></li></ul></div></div><div class=\"row\"><div class=\"col-sm-4\"><div class=\"form-group\"><input type=\"text\" placeholder=\"Who is this?\" data-bind=\"avatar.name\" class=\"form-control\"/></div></div></div><div class=\"row\"><div class=\"col-sm-6\"><div class=\"well well-small\"><canvas id=\"new-avatar\" style=\"height:300px; width:300px; border: 1px solid black; cursor:pointer;\"></canvas></div></div><div class=\"col-sm-6\"><div class=\"row\"><div class=\"col-sm-6\"><h3><span>Active Feature:&nbsp;</span><br/><small data-bind=\"currentItem.feature.name\"></small></h3><p data-showif=\"currentItem\"><a data-event-click=\"prevForType | withArguments currentItem.feature.type\">Prev</a><a data-event-click=\"nextForType | withArguments currentItem.feature.type\" class=\"pull-right\">Next</a></p><div style=\"height:100px;\" class=\"img-container\"><img style=\"max-height:100px\" data-bind-src=\"currentItem.feature.imageDataURI\"/></div></div><div class=\"col-sm-6\"><h4>Your Features:</h4><ul class=\"list-unstyled\"><li data-foreach-type=\"Component.TYPES\" data-context-feature=\"avatar[type]\"><strong data-bind=\"type | capitalize | append &quot;: &quot;\"></strong><a data-event-click=\"activateFeature | withArguments feature\"><span data-bind=\"feature.name\"></span></a></li><li data-showif=\"avatar.features.length\"><strong>Other Features</strong></li><li data-foreach-feature=\"avatar.features.sortedByDescending.index\"><a data-bind=\"feature.name\" data-event-click=\"activateFeature | withArguments feature\"></a><a data-event-click=\"removeFeature | withArguments feature\" class=\"text-danger pull-right\">&times;</a></li></ul></div></div><div class=\"row\"><div class=\"col-sm-3\"><a data-event-click=\"zoomIn\" class=\"btn btn-primary\">Zoom In</a></div><div class=\"col-sm-3\"><a data-event-click=\"zoomOut\" class=\"btn btn-primary\">Zoom Out</a></div><div class=\"col-sm-3\"><a data-event-click=\"rotateLeft\" class=\"btn btn-primary\">Rotate Left</a></div><div class=\"col-sm-3\"><a data-event-click=\"rotateRight\" class=\"btn btn-primary\">Rotate Right</a></div></div><br/><div class=\"row\"><div class=\"col-sm-3\"><a data-event-click=\"bringToFront\" class=\"btn btn-primary\">Bring to Front</a></div><div class=\"col-sm-3\"><a data-event-click=\"sendToBack\" class=\"btn btn-primary\">Send to Back</a></div><div class=\"col-sm-3\"><a data-event-click=\"remove\" class=\"btn btn-danger\">Remove</a></div></div></div></div><div class=\"row\"><div class=\"col-sm-4\"><a data-event-click=\"downloadAvatar\" class=\"btn btn-primary\">Download Avatar</a></div><div class=\"col-sm-4\"><a data-addclass-btn-warning=\"wasChanged\" data-event-click=\"saveAvatar\" data-bind=\"saveMessage | default &quot;Save Avatar&quot;\" class=\"btn btn-success\"></a></div><div class=\"col-sm-4\"><a data-event-click=\"executeAction | withArguments &quot;keyboardShortcuts&quot;\" class=\"btn btn-info\">Keyboard Shortcuts</a></div></div></div>');
-Batman.View.store.set('/avatars/index', '<div class=\"row\"><div data-foreach-avatar=\"avatars\" class=\"col-sm-3\"><div class=\"thumbnail\"><div style=\"height:200px;width:100%\" class=\"img-container\"><img style=\"max-height:100%; max-width:100%\" data-bind-src=\"avatar.imageDataURI\"/></div><div class=\"caption\"><p data-bind=\"avatar.name\"></p><p><a data-event-click=\"destroy | withArguments avatar\" class=\"btn btn-danger\">Delete</a><a data-route=\"routes.avatars[avatar].edit\" class=\"btn btn-primary\">Edit</a></p></div></div></div></div>');
+Batman.View.store.set('/avatars/index', '<div class=\"row\"><div data-foreach-avatar=\"avatars\" class=\"col-sm-3\"><div class=\"thumbnail\"><a data-route=\"routes.avatars[avatar]\"><div style=\"height:200px;width:100%\" class=\"img-container\"><img style=\"max-height:100%; max-width:100%\" data-bind-src=\"avatar.imageDataURI\"/></div></a><div class=\"caption\"><p data-bind=\"avatar.name\"></p><p data-showif=\"avatar.hasOwner\" data-bind=\"avatar.created_by_username | prepend &quot;Created by &quot;\"></p><p data-showif=\"avatar.isOwnedByCurrentUser\"><a data-event-click=\"destroy | withArguments avatar\" class=\"btn btn-danger\">Delete</a><a data-route=\"routes.avatars[avatar].edit\" class=\"btn btn-primary\">Edit</a></p></div></div></div></div>');
 Batman.View.store.set('/avatars/new', '<div data-partial=\"avatars/form\"></div>');
+Batman.View.store.set('/avatars/show', '<div class=\"row\"><div class=\"col-sm-3\"><div class=\"thumbnail\"><div style=\"height:200px;width:100%\" class=\"img-container\"><img style=\"max-height:100%; max-width:100%\" data-bind-src=\"avatar.imageDataURI\"/></div><div class=\"caption\"><p data-bind=\"avatar.name\"></p><p><a data-event-click=\"destroy | withArguments avatar\" class=\"btn btn-danger\">Delete</a><a data-route=\"routes.avatars[avatar].edit\" class=\"btn btn-primary\">Edit</a></p></div></div></div></div>');
 Batman.View.store.set('/components/edit', '<div data-partial=\"components/form\"></div>');
 Batman.View.store.set('/components/form', '<form data-formfor-c=\"component\" data-event-submit=\"saveComponent\"><div class=\"row\"><div data-showif=\"c.errors.length\" class=\"alert alert-danger\"><ul class=\"list-unstyled\"><li data-foreach-error=\"c.errors\" data-bind=\"error.fullMessage\"></li></ul></div></div><div class=\"row\"><div class=\"col-xs-6\"><div class=\"well\"><div style=\"height:200px;width:100%\" class=\"img-container\"><p data-showif=\"c.imageDataURI | not\">Upload an image to see a preview!</p><img style=\"max-height:100%; max-width:100%\" data-bind-src=\"c.imageDataURI\"/></div></div></div><div class=\"col-xs-6\"><div class=\"well well-small\"><canvas id=\"new-avatar\" style=\"height:300px; width:300px; border: 1px solid black; cursor:pointer;\"></canvas></div></div></div><div class=\"row\"><div class=\"form-group col-xs-6\"><label>Name</label><input type=\"text\" data-bind=\"c.name\" placeholder=\"name\" class=\"form-control\"/></div><div class=\"form-group col-xs-6\"><a data-event-click=\"executeAction | withArguments &quot;keyboardShortcuts&quot;\" class=\"btn btn-info\">Keyboard Shortcuts</a><br/><label>Default Position:</label><div class=\"row\"><div class=\"col-xs-3\"><input type=\"text\" disabled=\"true\" data-bind=\"component.defaultX\" class=\"form-control\"/></div><div class=\"col-xs-3\"><input type=\"text\" disabled=\"true\" data-bind=\"component.defaultY\" class=\"form-control\"/></div><div class=\"col-xs-3\"><input type=\"text\" disabled=\"true\" data-bind=\"component.defaultScale\" class=\"form-control\"/></div></div></div></div><div class=\"row\"><div class=\"form-group col-xs-6\"><label>Type</label><select data-bind=\"component.type\" class=\"form-control\"><option data-foreach-t=\"Component.TYPES\" data-bind=\"t\" data-bind-value=\"t\"></option></select></div><div class=\"form-group col-xs-6\"><label>File</label><input type=\"file\" data-bind=\"c.imageFile\" class=\"form-control\"/></div></div><div class=\"row\"><div class=\"form-group col-xs-6\"><label>Description</label><textarea data-bind=\"c.description\" placeholder=\"description\" class=\"form-control\"></textarea></div></div><div class=\"row\"><div class=\"form-group\"><div class=\"row\"><div class=\"col-xs-4\"><input data-addclass-btn-warning=\"wasChanged | or c.isDirty\" type=\"submit\" data-bind-value=\"saveMessage | default &quot;Save Component&quot;\" class=\"btn btn-primary\"/></div><div class=\"col-xs-4\"><a data-event-click=\"destroy | withArguments component\" data-showif=\"component.isNew | not\" class=\"btn btn-danger\">Delete</a></div></div></div></div></form>');
 Batman.View.store.set('/components/index', '<div class=\"row\"><div class=\"col-sm-6\"><h1 class=\"page-header\">Components</h1></div></div><div class=\"row\"><div class=\"col-sm-3 col-sm-offset-9\"><a data-route=\"routes.components.new\" class=\"btn btn-primary\">New Component</a></div></div><div data-foreach-group=\"componentGroups\" class=\"row\"><div data-foreach-component=\"group\" class=\"col-sm-3\"><div class=\"thumbnail\"><div style=\"height:200px;width:100%\" class=\"img-container\"><img style=\"max-height:100%; max-width:100%\" data-bind-src=\"component.imageDataURI\"/></div><div class=\"caption\"><p><span data-bind=\"component.name | append &quot; &quot;\"></span><span data-bind=\"component.type | prepend &quot;(&quot; | append &quot;)&quot;\" class=\"text-muted\"></span></p><a data-route=\"routes.components[component].edit\" class=\"btn btn-primary\">Edit</a><a data-event-click=\"destroy | withArguments component\" class=\"btn btn-danger\">Destroy</a></div></div></div></div>');

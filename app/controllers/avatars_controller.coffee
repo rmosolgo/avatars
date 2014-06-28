@@ -3,9 +3,8 @@ class App.AvatarsController extends App.ApplicationController
   new: ->
     @render(false)
     App.Component.load =>
-      @set 'avatar', new App.Avatar
+      @set 'avatar', App.Avatar.makeTemplate()
       @render()
-
 
   index: ->
     @set 'avatars', App.Avatar.get('all')
@@ -25,4 +24,8 @@ class App.AvatarsController extends App.ApplicationController
         @set('avatar', record)
         @render()
 
-
+  show:  (params) ->
+    @render(false)
+    App.Avatar.find params.id, (err, record) =>
+      @set('avatar', record)
+      @render()
